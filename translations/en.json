@@ -1,4 +1,11 @@
 {
 	"TITLE": "Photovoltaics state",
-	"STAND_BY": "Stand-By"
+	"STAND_BY": "Stand-By",
+	"YESTERDAY": "Yesterday",
+	"THIS_MONTH": "This Month",
+	"THIS_YEAR": "This Year",
+	"LIFETIME": "Lifetime",
+	"OR": "or",
+	"SAVED": "saved",
+	"TREES_PLANTED": "trees planted"
 }

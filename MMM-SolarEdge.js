@@ -9,8 +9,13 @@
 
 Module.register("MMM-SolarEdge", {
   defaults: {
-    updateInterval: 10000,
-    retryDelay: 5000
+    updateInterval: 100000,
+    retryDelay: 5000,
+    siteId: 0,
+    apiKey: "replace-me",
+    updateIntervalBasicData: 1000 * 60 * 60 * 12, //every 12 hours
+    updateIntervalGraphics: 1000 * 60 * 15, //every 15 minutes
+    mockData: false //for development purposes only!
   },
 
   requiresVersion: "2.1.0", // Required version of MagicMirror
@@ -23,24 +28,57 @@ Module.register("MMM-SolarEdge", {
     //Flag for check if module is loaded
     this.loaded = false;
     //Initially load data
-    self.getSolarEdgeData();
+    self.getCurrentPowerData();
+    self.getDetailsData();
+    self.getOverviewData();
+    self.getEnvBenefitsData();
 
-    // Schedule update timer.
+    // Schedule update timer for CurrentPower.
     setInterval(function () {
-      self.getSolarEdgeData();
+      self.getCurrentPowerData();
       self.updateDom();
     }, this.config.updateInterval);
+
+    // Schedule update timer for Details.
+    setInterval(function () {
+      self.getDetailsData();
+      self.getOverviewData();
+      self.getEnvBenefitsData();
+      self.updateDom();
+    }, this.config.updateIntervalBasicData);
+    this.loaded = true;
   },
 
-  /*
-   * getSolarEdge
-   * function returns solaredge data and show it in the module wrapper
-   * get a URL request
-   *
-   */
-  getSolarEdgeData: function () {
+  getDetailsData: function () {
     this.sendSocketNotification(
-      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DATA_REQUESTED",
+      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DETAILS_DATA_REQUESTED",
+      {
+        config: this.config
+      }
+    );
+  },
+
+  getCurrentPowerData: function () {
+    this.sendSocketNotification(
+      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_CURRENTPOWER_DATA_REQUESTED",
+      {
+        config: this.config
+      }
+    );
+  },
+
+  getOverviewData: function () {
+    this.sendSocketNotification(
+      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_OVERVIEW_DATA_REQUESTED",
+      {
+        config: this.config
+      }
+    );
+  },
+
+  getEnvBenefitsData: function () {
+    this.sendSocketNotification(
+      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_ENVBENEFITS_DATA_REQUESTED",
       {
         config: this.config
       }
@@ -61,7 +99,9 @@ Module.register("MMM-SolarEdge", {
       wrapperData = document.createElement("div");
       wrapperData.classList.add("small");
       wrapperData.innerHTML =
-        power + " " + this.dataNotification.siteCurrentPowerFlow.unit;
+        power +
+        " " +
+        this.dataNotificationCurrentPower.siteCurrentPowerFlow.unit;
     } else {
       wrapperData = document.createElement("div");
       wrapperData.classList.add("small");
@@ -99,25 +139,47 @@ Module.register("MMM-SolarEdge", {
   getDom: function () {
     // create element wrapper for show into the module
     var wrapper = document.createElement("div");
+    if (this.config.apiKey === "" || this.config.siteId === "") {
+      wrapper.innerHTML = "Missing configuration for MMM-SolarEdge.";
+      return wrapper;
+    }
+    if (!this.loaded) {
+      wrapper.innerHTML = "Loading MMM-SolarEdge...";
+      return wrapper;
+    }
 
     // Data from helper
-    if (this.dataNotification) {
+    var wrapperTitle = document.createElement("header");
+    wrapperTitle.classList.add("module-header");
+    wrapperTitle.innerHTML = this.translate("TITLE");
+    wrapper.appendChild(wrapperTitle);
+
+    if (this.dataNotificationDetails) {
+      wrapperTitle.innerHTML =
+        this.translate("TITLE") +
+        " - " +
+        this.dataNotificationDetails.details.location.address +
+        ", " +
+        this.dataNotificationDetails.details.location.city +
+        " - " +
+        this.dataNotificationDetails.details.peakPower
+          .toFixed(2)
+          .replace(".", ",") +
+        " KWP";
+    }
+    if (this.dataNotificationCurrentPower) {
       var allArrowConnections = this.getArrowConnections(
-        this.dataNotification.siteCurrentPowerFlow.connections
+        this.dataNotificationCurrentPower.siteCurrentPowerFlow.connections
       );
 
-      var wrapperTitle = document.createElement("header");
-      wrapperTitle.classList.add("module-header");
-      wrapperTitle.innerHTML = this.translate("TITLE");
-
-      var wrapperCurrentData = document.createElement("div");
-      wrapperCurrentData.classList.add("container");
+      var wrapperCurrentPowerData = document.createElement("div");
+      wrapperCurrentPowerData.classList.add("container");
 
       var wrapperPv = this.createBlock(
-        this.dataNotification.siteCurrentPowerFlow.PV.currentPower
+        this.dataNotificationCurrentPower.siteCurrentPowerFlow.PV.currentPower
           .toFixed(2)
           .replace(".", ","),
-        this.dataNotification.siteCurrentPowerFlow.PV.status,
+        this.dataNotificationCurrentPower.siteCurrentPowerFlow.PV.status,
         "images/pv.svg"
       );
 
@@ -129,10 +191,10 @@ Module.register("MMM-SolarEdge", {
       }
 
       var wrapperHome = this.createBlock(
-        this.dataNotification.siteCurrentPowerFlow.LOAD.currentPower
+        this.dataNotificationCurrentPower.siteCurrentPowerFlow.LOAD.currentPower
           .toFixed(2)
           .replace(".", ","),
-        this.dataNotification.siteCurrentPowerFlow.LOAD.status,
+        this.dataNotificationCurrentPower.siteCurrentPowerFlow.LOAD.status,
         "images/home.svg"
       );
 
@@ -146,21 +208,108 @@ Module.register("MMM-SolarEdge", {
       }
 
       var wrapperGrid = this.createBlock(
-        this.dataNotification.siteCurrentPowerFlow.GRID.currentPower
+        this.dataNotificationCurrentPower.siteCurrentPowerFlow.GRID.currentPower
           .toFixed(2)
           .replace(".", ","),
-        this.dataNotification.siteCurrentPowerFlow.GRID.status,
+        this.dataNotificationCurrentPower.siteCurrentPowerFlow.GRID.status,
         "images/grid.svg"
       );
 
-      wrapperCurrentData.appendChild(wrapperPv);
-      wrapperCurrentData.appendChild(wrapperArrowPvHome);
-      wrapperCurrentData.appendChild(wrapperHome);
-      wrapperCurrentData.appendChild(wrapperArrowHomeGrid);
-      wrapperCurrentData.appendChild(wrapperGrid);
+      wrapperCurrentPowerData.appendChild(wrapperPv);
+      wrapperCurrentPowerData.appendChild(wrapperArrowPvHome);
+      wrapperCurrentPowerData.appendChild(wrapperHome);
+      wrapperCurrentPowerData.appendChild(wrapperArrowHomeGrid);
+      wrapperCurrentPowerData.appendChild(wrapperGrid);
 
-      wrapper.appendChild(wrapperTitle);
-      wrapper.appendChild(wrapperCurrentData);
+      wrapper.appendChild(wrapperCurrentPowerData);
+    }
+    if (this.dataNotificationOverview) {
+      this.titles = [
+        this.translate("YESTERDAY"),
+        this.translate("THIS_MONTH"),
+        this.translate("THIS_YEAR"),
+        this.translate("LIFETIME")
+      ];
+      this.results = [];
+      this.results.push(
+        (this.dataNotificationOverview.overview.lastDayData.energy / 1000)
+          .toFixed(2)
+          .replace(".", ",") + " kWh"
+      );
+      this.results.push(
+        (this.dataNotificationOverview.overview.lastMonthData.energy / 1000)
+          .toFixed(2)
+          .replace(".", ",") + " kWh"
+      );
+      this.results.push(
+        (this.dataNotificationOverview.overview.lastYearData.energy / 1000)
+          .toFixed(2)
+          .replace(".", ",") + " kWh"
+      );
+      this.results.push(
+        (this.dataNotificationOverview.overview.lifeTimeData.energy / 1000)
+          .toFixed(2)
+          .replace(".", ",") + " kWh"
+      );
+
+      var wrapperCurrentOverviewData = document.createElement("div");
+      wrapperCurrentOverviewData.classList.add("limit-width");
+
+      var tb = document.createElement("table");
+      tb.classList.add("limit-width");
+
+      for (var i = 0; i < this.results.length; i++) {
+        var row = document.createElement("tr");
+
+        var titleTr = document.createElement("td");
+        var dataTr = document.createElement("td");
+
+        titleTr.innerHTML = this.titles[i];
+        titleTr.classList.add("align-left");
+        titleTr.classList.add("light");
+        dataTr.innerHTML = this.results[i];
+        dataTr.classList.add("align-right");
+
+        row.appendChild(titleTr);
+        row.appendChild(dataTr);
+
+        tb.appendChild(row);
+        wrapperCurrentOverviewData.appendChild(tb);
+      }
+      if (this.dataNotificationEnvBenefits) {
+        var envtb = document.createElement("table");
+        envtb.classList.add("limit-width");
+        var envRow = document.createElement("tr");
+
+        var envTitleTr = document.createElement("td");
+        var endDataTr1 = document.createElement("td");
+        var endDataTr2 = document.createElement("td");
+
+        envTitleTr.innerHTML =
+          Math.round(
+            this.dataNotificationEnvBenefits.envBenefits.gasEmissionSaved.co2
+          ) +
+          " kg CO2 " +
+          this.translate("SAVED");
+        envTitleTr.classList.add("align-left");
+        endDataTr1.innerHTML = this.translate("OR");
+        endDataTr2.innerHTML =
+          Math.round(
+            this.dataNotificationEnvBenefits.envBenefits.treesPlanted
+          ) +
+          " " +
+          this.translate("TREES_PLANTED");
+        endDataTr2.classList.add("align-right");
+
+        envRow.appendChild(envTitleTr);
+        envRow.appendChild(endDataTr1);
+        envRow.appendChild(endDataTr2);
+
+        envtb.appendChild(envRow);
+        wrapperCurrentOverviewData.appendChild(envtb);
+      }
+
+      wrapper.appendChild(wrapperCurrentOverviewData);
     }
     return wrapper;
   },
@@ -183,9 +332,39 @@ Module.register("MMM-SolarEdge", {
 
   // socketNotificationReceived from helper
   socketNotificationReceived: function (notification, payload) {
-    if (notification === "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DATA_RECEIVED") {
+    if (
+      notification ===
+      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_CURRENTPOWER_DATA_RECEIVED"
+    ) {
       // set dataNotification
-      this.dataNotification = payload;
+      this.dataNotificationCurrentPower = payload;
+      this.updateDom();
+    }
+
+    if (
+      notification ===
+      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DETAILS_DATA_RECEIVED"
+    ) {
+      // set dataNotification
+      this.dataNotificationDetails = payload;
+      this.updateDom();
+    }
+
+    if (
+      notification ===
+      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_OVERVIEW_DATA_RECEIVED"
+    ) {
+      // set dataNotification
+      this.dataNotificationOverview = payload;
+      this.updateDom();
+    }
+
+    if (
+      notification ===
+      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_ENVBENEFITS_DATA_RECEIVED"
+    ) {
+      // set dataNotification
+      this.dataNotificationEnvBenefits = payload;
       this.updateDom();
     }
   }

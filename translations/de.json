@@ -1,4 +1,11 @@
 {
 	"TITLE": "Photovoltaik Status",
-	"STAND_BY": "Bereit"
+	"STAND_BY": "Bereit",
+	"YESTERDAY": "Gestern",
+	"THIS_MONTH": "Diesen Monat",
+	"THIS_YEAR": "Dieses Jahr",
+	"LIFETIME": "Seit Beginn",
+	"OR": "oder",
+	"SAVED": "gespart",
+	"TREES_PLANTED": "Bäume gepflanzt"
 }

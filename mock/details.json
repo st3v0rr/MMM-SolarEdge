@@ -1,0 +1,37 @@
+{
+	"details": {
+		"id": 123,
+		"name": "Mustermann",
+		"accountId": 12345,
+		"status": "Active",
+		"peakPower": 10.05,
+		"lastUpdateTime": "2021-02-01",
+		"installationDate": "2021-01-01",
+		"ptoDate": null,
+		"notes": "",
+		"type": "Optimizers & Inverters",
+		"location": {
+			"country": "Germany",
+			"city": "Musterstadt",
+			"address": "Musterstraße 1",
+			"address2": "",
+			"zip": "12345",
+			"timeZone": "Europe/Berlin",
+			"countryCode": "DE"
+		},
+		"primaryModule": {
+			"manufacturerName": "Some Manufacturer Ltd",
+			"modelName": "XXX 330Wp",
+			"maximumPower": 330.0,
+			"temperatureCoef": -0.48
+		},
+		"uris": {
+			"DETAILS": "/site/123/details",
+			"DATA_PERIOD": "/site/123/dataPeriod",
+			"OVERVIEW": "/site/123/overview"
+		},
+		"publicSettings": {
+			"isPublic": false
+		}
+	}
+}

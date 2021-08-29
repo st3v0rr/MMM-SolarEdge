@@ -28,10 +28,14 @@ var config = {
 
 ## Configuration options
 
-| Option           | Description
-|----------------- |-----------
-| `apiKey`         | *Required* An API Key that can be obtained by creating one in your SolarEdge Monitoring Portal https://monitoring.solaredge.com
-| `siteId`         | *Required* The Site ID of the SolarEdge system you wish to monitor, which can be found in the Dashboard https://monitoring.solaredge.com
+| Option                            | Description
+|-----------------                  |-----------
+| `apiKey`                          | *Required* An API Key that can be obtained by creating one in your SolarEdge Monitoring Portal https://monitoring.solaredge.com
+| `siteId`                          | *Required* The Site ID of the SolarEdge system you wish to monitor, which can be found in the Dashboard https://monitoring.solaredge.com
+| `updateIntervalBasicData`         | *Optional* Update interval** for the basic data like overview or details, default is 12 hours
+| `updateIntervalGraphics`          | *Optional* Update interval** for the basic data like overview or details, default is 15 minutes
+| `mockData`                        | *Optional* If you like to change something without using the real API, default is false
+** be aware that with custom params you could reach the daily request limit of the SolarEdge API gateway.
 
 ## Samples
-![alt text](https://github.com/st3v0rr/MMM-SolarEdge/raw/main/docs/CurrentPower.png "Example")
+![alt text](https://github.com/st3v0rr/MMM-SolarEdge/raw/main/docs/SolarEdge.png "Example")

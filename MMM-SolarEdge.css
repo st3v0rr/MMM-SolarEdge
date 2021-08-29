@@ -19,3 +19,23 @@
 .stand-by {
   color: darkred;
 }
+
+.limit-width {
+  border-top: 1px solid var(--color-text-dimmed);
+  border-bottom: 1px solid var(--color-text-dimmed);
+  width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.border-top {
+  border-top: 1px solid var(--color-text-dimmed);
+}
+
+.align-left {
+  text-align: left;
+}
+
+.align-right {
+  text-align: right;
+}
