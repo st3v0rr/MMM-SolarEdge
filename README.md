@@ -34,4 +34,4 @@ var config = {
 | `siteId`         | *Required* The Site ID of the SolarEdge system you wish to monitor, which can be found in the Dashboard https://monitoring.solaredge.com
 
 ## Samples
-![alt text](https://github.com/st3v0rr/MMM-SolarEdge/blob/master/SolarEdge.png "Example")
+![alt text](https://github.com/st3v0rr/MMM-SolarEdge/blob/master/docs/CurrentPower.png "Example")
