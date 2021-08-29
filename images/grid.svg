@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="96px" height="96px" viewBox="0 0 96 96" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+        <g id="GRID" stroke="#DDDDDD" stroke-width="2">
+            <g id="ico_grid_active">
+                <g id="ico_grid_active_shapes" transform="translate(17.000000, 17.000000)">
+                    <path d="M20,0 L6,62" id="Shape"></path>
+                    <path d="M20,0 L34,62" id="Shape"></path>
+                    <polygon id="Shape" points="40 35 0 35 13.9 27 26.1 27"></polygon>
+                    <polygon id="Shape" points="40 19 0 19 17.5 11 22.5 11"></polygon>
+                    <path d="M62,62 L0,62" id="Shape"></path>
+                    <path d="M13.8,27 L27.9,35" id="Shape"></path>
+                    <path d="M26,27 L12.1,35" id="Shape"></path>
+                    <path d="M27.9,35 L6,62" id="Shape"></path>
+                    <path d="M12.1,35 L34,62" id="Shape"></path>
+                    <path d="M22.5,11 L15.7,19" id="Shape"></path>
+                    <path d="M17.5,11 L24.3,19" id="Shape"></path>
+                    <path d="M52,31 L45,62" id="Shape"></path>
+                    <path d="M52,31 L59,62" id="Shape"></path>
+                    <polygon id="Shape" points="62 48.5 42 48.5 49 44.5 55 44.5"></polygon>
+                    <polygon id="Shape" points="62 40.5 42 40.5 50.7 36.5 53.2 36.5"></polygon>
+                    <path d="M56,48.5 L45,62" id="Shape"></path>
+                    <path d="M48,48.5 L59,62" id="Shape"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="96px" height="96px" viewBox="0 0 96 96" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>ico_pv_active</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="PV">
+            <g id="ico_pv_active">
+                <g id="pv" transform="translate(12.000000, 46.000000)">
+                    <polygon id="Rectangle-15-Copy" fill="#BBBBBB" points="10 2 61 2 70 32 1 32"></polygon>
+                    <path d="M10.1773509,1 L1.31460585,33 L70.6853942,33 L61.8226491,1 L10.1773509,1 Z" id="Rectangle-7" stroke="#DDDDDD" stroke-width="2"></path>
+                    <path d="M18.1384412,33.0570747 L22.5707353,1.05707469" id="Line" stroke="#DDDDDD" stroke-width="2" stroke-linecap="square"></path>
+                    <path d="M8.39215686,10 L63.9674964,10" id="Line" stroke="#DDDDDD" stroke-width="2" stroke-linecap="square"></path>
+                    <path d="M5.53056917,21 L66.8663627,21" id="Line" stroke="#DDDDDD" stroke-width="2" stroke-linecap="square"></path>
+                    <path d="M36,33.0570747 L36,1.05707469" id="Line" stroke="#DDDDDD" stroke-width="2" stroke-linecap="square"></path>
+                    <path d="M53.8615588,33.0570747 L49.4292647,1.05707469" id="Line" stroke="#DDDDDD" stroke-width="2" stroke-linecap="square"></path>
+                </g>
+                <g id="sun" transform="translate(31.000000, 26.000000)">
+                    <g id="circle" transform="translate(8.000000, 7.000000)" fill="#DDDDDD" fill-rule="nonzero">
+                        <path d="M0.143920898,10.0230482 C0.0223860211,9.52107639 0,9.03264685 0,8.5 C0,3.80557963 3.80557963,0 8.5,0 C13.1944204,0 17,3.80557963 17,8.5 C17,9.01990549 16.9533227,9.52890891 16.8639302,10.0230482 C11.1586914,10.0230482 2.88834796,9.98674528 0.143920898,10.0230482 Z M8.5,10.0213928 C8.6796875,10.0213928 13.2292049,10.0213928 14.8225708,10.0213928 C14.946443,9.52018825 15,9.03947408 15,8.5 C15,4.91014913 12.0898509,2 8.5,2 C4.91014913,2 2,4.91014913 2,8.5 C2,8.99799461 2.06835623,9.55551302 2.17440796,10.0213928 C4.21240234,10.0213928 5.58676147,10.0213928 8.5,10.0213928 Z" id="Oval-4"></path>
+                    </g>
+                    <g id="rays" stroke="#DDDDDD" stroke-width="2">
+                        <path d="M17,0 L17,4" id="Line-2" stroke-linecap="round"></path>
+                        <path d="M33,15 L28,15" id="Line-2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M5,15 L0,15" id="Line-2" stroke-linecap="round"></path>
+                        <path d="M7.37132034,7.18830764 L4.3527832,4.31201172" id="Line-2" stroke-linecap="square"></path>
+                        <path d="M28.0620117,7.18830764 L25.1286797,4.2434082" id="Line-2" stroke-linecap="square" transform="translate(26.595346, 5.715858) scale(-1, 1) translate(-26.595346, -5.715858) "></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

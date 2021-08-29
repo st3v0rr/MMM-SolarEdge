@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="96px" height="96px" viewBox="0 0 96 96" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>ic_load_active</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="RESIDENCIAL">
+            <g id="ic_load_active">
+                <g id="ic_load_active_shapes" transform="translate(21.000000, 29.000000)">
+                    <path d="M1,19.5206955 L1,50 L53,50 L53,19.517454 L27.1433621,1.22278725 L1,19.5206955 Z" id="Rectangle-2" stroke="#DDDDDD" stroke-width="2"></path>
+                    <g id="win" transform="translate(11.000000, 36.000000)" fill="#BBBBBB" stroke="#DDDDDD" stroke-linejoin="round" stroke-width="2">
+                        <rect id="Rectangle-path" x="6" y="0" width="6" height="6"></rect>
+                        <rect id="Rectangle-path" x="0" y="0" width="6" height="6"></rect>
+                    </g>
+                    <g id="win" transform="translate(31.000000, 36.000000)" fill="#BBBBBB" stroke="#DDDDDD" stroke-linejoin="round" stroke-width="2">
+                        <rect id="Rectangle-path" x="6" y="0" width="6" height="6"></rect>
+                        <rect id="Rectangle-path" x="0" y="0" width="6" height="6"></rect>
+                    </g>
+                    <g id="win" transform="translate(11.000000, 22.000000)" fill="#BBBBBB" stroke="#DDDDDD" stroke-linejoin="round" stroke-width="2">
+                        <rect id="Rectangle-path" x="6" y="0" width="6" height="6"></rect>
+                        <rect id="Rectangle-path" x="0" y="0" width="6" height="6"></rect>
+                    </g>
+                    <g id="win" transform="translate(31.000000, 22.000000)" fill="#BBBBBB" stroke="#DDDDDD" stroke-linejoin="round" stroke-width="2">
+                        <rect id="Rectangle-path" x="0" y="0" width="6" height="6"></rect>
+                        <rect id="Rectangle-path" x="6" y="0" width="6" height="6"></rect>
+                    </g>
+                    <polygon id="Rectangle-5" fill="#DDDDDD" points="36 3 45 3 45 14 36 8"></polygon>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

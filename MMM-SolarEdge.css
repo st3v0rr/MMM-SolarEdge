@@ -1,0 +1,21 @@
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.block {
+  width: 120px;
+  height: 120px;
+  margin: 10px;
+}
+
+.arrow-block {
+  width: 60px;
+  height: 120px;
+  margin-top: 50px;
+}
+
+.stand-by {
+  color: darkred;
+}

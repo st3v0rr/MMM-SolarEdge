@@ -1,0 +1,25 @@
+{
+	"name": "MMM-SolarEdge",
+	"version": "1.0.0",
+	"description": "Todo: Insert description here!",
+	"main": "MMM-SolarEdge.js",
+	"author": "Stefan Nachtrab",
+	"license": "MIT",
+	"devDependencies": {
+		"babel-eslint": "^10.1.0",
+		"eslint": "^7.32.0",
+		"eslint-config-prettier": "^8.3.0",
+		"eslint-plugin-prettier": "^3.4.1",
+		"grunt": "latest",
+		"grunt-eslint": "latest",
+		"grunt-jsonlint": "latest",
+		"grunt-markdownlint": "^1.0.13",
+		"grunt-stylelint": "latest",
+		"grunt-yamllint": "latest",
+		"prettier": "^2.3.2",
+		"prettier-eslint": "^13.0.0",
+		"prettier-eslint-cli": "^5.0.1",
+		"stylelint-config-standard": "latest",
+		"time-grunt": "latest"
+	}
+}
