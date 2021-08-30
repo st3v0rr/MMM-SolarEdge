@@ -9,10 +9,10 @@
 
 Module.register("MMM-SolarEdge", {
   defaults: {
-    updateInterval: 100000,
+    updateInterval: 15000,
     retryDelay: 5000,
-    siteId: 0,
-    apiKey: "replace-me",
+    siteId: undefined,
+    apiKey: undefined,
     updateIntervalBasicData: 1000 * 60 * 60 * 12, //every 12 hours
     updateIntervalGraphics: 1000 * 60 * 15, //every 15 minutes
     mockData: false //for development purposes only!
