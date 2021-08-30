@@ -13,7 +13,7 @@ Module.register("MMM-SolarEdge", {
     retryDelay: 5000,
     siteId: undefined,
     apiKey: undefined,
-    updateIntervalBasicData: 1000 * 60 * 60 * 12, //every 12 hours
+    updateIntervalBasicData: 1000 * 60 * 60 * 4, //every 4 hours
     updateIntervalGraphics: 1000 * 60 * 15, //every 15 minutes
     mockData: false //for development purposes only!
   },
