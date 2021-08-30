@@ -136,6 +136,26 @@ Module.register("MMM-SolarEdge", {
     );
   },
 
+  getHeader: function () {
+    var title;
+    if (this.dataNotificationDetails) {
+      title =
+        this.translate("TITLE") +
+        " - " +
+        this.dataNotificationDetails.details.location.address +
+        ", " +
+        this.dataNotificationDetails.details.location.city +
+        " - " +
+        this.dataNotificationDetails.details.peakPower
+          .toFixed(2)
+          .replace(".", ",") +
+        " KWP";
+    } else {
+      title = this.translate("TITLE");
+    }
+    return title;
+  },
+
   getDom: function () {
     // create element wrapper for show into the module
     var wrapper = document.createElement("div");
@@ -149,24 +169,6 @@ Module.register("MMM-SolarEdge", {
     }
 
     // Data from helper
-    var wrapperTitle = document.createElement("header");
-    wrapperTitle.classList.add("module-header");
-    wrapperTitle.innerHTML = this.translate("TITLE");
-    wrapper.appendChild(wrapperTitle);
-
-    if (this.dataNotificationDetails) {
-      wrapperTitle.innerHTML =
-        this.translate("TITLE") +
-        " - " +
-        this.dataNotificationDetails.details.location.address +
-        ", " +
-        this.dataNotificationDetails.details.location.city +
-        " - " +
-        this.dataNotificationDetails.details.peakPower
-          .toFixed(2)
-          .replace(".", ",") +
-        " KWP";
-    }
     if (this.dataNotificationCurrentPower) {
       var allArrowConnections = this.getArrowConnections(
         this.dataNotificationCurrentPower.siteCurrentPowerFlow.connections
