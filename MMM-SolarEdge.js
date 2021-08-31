@@ -9,7 +9,7 @@
 
 Module.register("MMM-SolarEdge", {
   defaults: {
-    updateInterval: 10000,
+    updateInterval: 20000,
     retryDelay: 5000,
     siteId: undefined,
     apiKey: undefined,
