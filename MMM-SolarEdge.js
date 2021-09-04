@@ -9,13 +9,17 @@
 
 Module.register("MMM-SolarEdge", {
   defaults: {
-    updateInterval: 30000,
+    updateInterval: 60000,
     retryDelay: 5000,
     siteId: undefined,
     apiKey: undefined,
     updateIntervalBasicData: 1000 * 60 * 60 * 4, //every 4 hours
     updateIntervalGraphics: 1000 * 60 * 15, //every 15 minutes
-    mockData: false //for development purposes only!
+    mockData: false, //for development purposes only!
+    primes: [
+      499, 997, 1499, 1997, 2503, 2999, 3499, 4001, 4493, 4999, 5501, 6007,
+      6491, 7001, 7499, 7993, 8501, 8999, 9497, 9773
+    ] //prime factors to avoid api limitation (429) in schedules
   },
 
   requiresVersion: "2.1.0", // Required version of MagicMirror
@@ -29,9 +33,18 @@ Module.register("MMM-SolarEdge", {
     this.loaded = false;
     //Initially load data
     self.getCurrentPowerData();
-    self.getDetailsData();
-    self.getOverviewData();
-    self.getEnvBenefitsData();
+    setTimeout(
+      () => self.getDetailsData(),
+      this.config.primes.sort(() => Math.random() - 0.5)[0]
+    );
+    setTimeout(
+      () => self.getOverviewData(),
+      this.config.primes.sort(() => Math.random() - 0.5)[0]
+    );
+    setTimeout(
+      () => self.getEnvBenefitsData(),
+      this.config.primes.sort(() => Math.random() - 0.5)[0]
+    );
 
     // Schedule update timer for CurrentPower.
     setInterval(function () {
@@ -42,10 +55,21 @@ Module.register("MMM-SolarEdge", {
     // Schedule update timer for Details.
     setInterval(function () {
       self.getDetailsData();
+      self.updateDom();
+    }, this.config.updateIntervalBasicData +
+      this.config.primes.sort(() => Math.random() - 0.5)[0]);
+
+    setInterval(function () {
       self.getOverviewData();
+      self.updateDom();
+    }, this.config.updateIntervalBasicData +
+      this.config.primes.sort(() => Math.random() - 0.5)[0]);
+
+    setInterval(function () {
       self.getEnvBenefitsData();
       self.updateDom();
-    }, this.config.updateIntervalBasicData);
+    }, this.config.updateIntervalBasicData +
+      this.config.primes.sort(() => Math.random() - 0.5)[0]);
     this.loaded = true;
   },
 
@@ -87,7 +111,7 @@ Module.register("MMM-SolarEdge", {
 
   createBlock: function (power, status, imagePath) {
     var wrapper = document.createElement("div");
-    wrapper.classList.add("block");
+    wrapper.classList.add("solaredge-container-block");
 
     var wrapperImage = document.createElement("div");
     var image = document.createElement("img");
@@ -105,7 +129,7 @@ Module.register("MMM-SolarEdge", {
     } else {
       wrapperData = document.createElement("div");
       wrapperData.classList.add("small");
-      wrapperData.classList.add("stand-by");
+      wrapperData.classList.add("solaredge-color-stand-by");
       wrapperData.innerHTML = this.translate("STAND_BY");
     }
 
@@ -116,7 +140,7 @@ Module.register("MMM-SolarEdge", {
 
   createArrowBlock: function (direction, color) {
     var wrapper = document.createElement("div");
-    wrapper.classList.add("arrow-block");
+    wrapper.classList.add("solaredge-container-arrow-block");
 
     if (direction && color) {
       var image = document.createElement("img");
@@ -175,7 +199,7 @@ Module.register("MMM-SolarEdge", {
       );
 
       var wrapperCurrentPowerData = document.createElement("div");
-      wrapperCurrentPowerData.classList.add("container");
+      wrapperCurrentPowerData.classList.add("solaredge-container");
 
       var wrapperPv = this.createBlock(
         this.dataNotificationCurrentPower.siteCurrentPowerFlow.PV.currentPower
@@ -255,10 +279,10 @@ Module.register("MMM-SolarEdge", {
       );
 
       var wrapperCurrentOverviewData = document.createElement("div");
-      wrapperCurrentOverviewData.classList.add("limit-width");
+      wrapperCurrentOverviewData.classList.add("solaredge-limit-width");
 
       var tb = document.createElement("table");
-      tb.classList.add("limit-width");
+      tb.classList.add("solaredge-border-top-bottom");
 
       for (var i = 0; i < this.results.length; i++) {
         var row = document.createElement("tr");
@@ -267,10 +291,10 @@ Module.register("MMM-SolarEdge", {
         var dataTr = document.createElement("td");
 
         titleTr.innerHTML = this.titles[i];
-        titleTr.classList.add("align-left");
+        titleTr.classList.add("solaredge-text-align-left");
         titleTr.classList.add("light");
         dataTr.innerHTML = this.results[i];
-        dataTr.classList.add("align-right");
+        dataTr.classList.add("solaredge-text-align-right");
 
         row.appendChild(titleTr);
         row.appendChild(dataTr);
@@ -280,7 +304,8 @@ Module.register("MMM-SolarEdge", {
       }
       if (this.dataNotificationEnvBenefits) {
         var envtb = document.createElement("table");
-        envtb.classList.add("limit-width");
+        envtb.classList.add("solaredge-limit-width");
+        envtb.classList.add("solaredge-border-top-bottom");
         var envRow = document.createElement("tr");
 
         var envTitleTr = document.createElement("td");
@@ -293,7 +318,7 @@ Module.register("MMM-SolarEdge", {
           ) +
           " kg CO2 " +
           this.translate("SAVED");
-        envTitleTr.classList.add("align-left");
+        envTitleTr.classList.add("solaredge-text-align-left");
         endDataTr1.innerHTML = this.translate("OR");
         endDataTr2.innerHTML =
           Math.round(
@@ -301,7 +326,7 @@ Module.register("MMM-SolarEdge", {
           ) +
           " " +
           this.translate("TREES_PLANTED");
-        endDataTr2.classList.add("align-right");
+        endDataTr2.classList.add("solaredge-text-align-right");
 
         envRow.appendChild(envTitleTr);
         envRow.appendChild(endDataTr1);

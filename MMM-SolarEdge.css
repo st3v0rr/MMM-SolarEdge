@@ -1,41 +1,40 @@
-.container {
+.solaredge-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
 }
 
-.block {
+.solaredge-container-block {
   width: 120px;
   height: 120px;
   margin: 10px;
 }
 
-.arrow-block {
+.solaredge-container-arrow-block {
   width: 60px;
   height: 120px;
   margin-top: 50px;
 }
 
-.stand-by {
+.solaredge-color-stand-by {
   color: darkred;
 }
 
-.limit-width {
-  border-top: 1px solid var(--color-text-dimmed);
-  border-bottom: 1px solid var(--color-text-dimmed);
+.solaredge-limit-width {
   width: 480px;
   margin-left: auto;
   margin-right: auto;
 }
 
-.border-top {
+.solaredge-border-top-bottom {
   border-top: 1px solid var(--color-text-dimmed);
+  border-bottom: 1px solid var(--color-text-dimmed);
 }
 
-.align-left {
+.solaredge-text-align-left {
   text-align: left;
 }
 
-.align-right {
+.solaredge-text-align-right {
   text-align: right;
 }
