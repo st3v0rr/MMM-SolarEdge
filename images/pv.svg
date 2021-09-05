@@ -8,7 +8,7 @@
         <g id="PV">
             <g id="ico_pv_active">
                 <g id="pv" transform="translate(12.000000, 46.000000)">
-                    <polygon id="Rectangle-15-Copy" fill="#BBBBBB" points="10 2 61 2 70 32 1 32"></polygon>
+                    <polygon id="Rectangle-15-Copy" points="10 2 61 2 70 32 1 32"></polygon>
                     <path d="M10.1773509,1 L1.31460585,33 L70.6853942,33 L61.8226491,1 L10.1773509,1 Z" id="Rectangle-7" stroke="#DDDDDD" stroke-width="2"></path>
                     <path d="M18.1384412,33.0570747 L22.5707353,1.05707469" id="Line" stroke="#DDDDDD" stroke-width="2" stroke-linecap="square"></path>
                     <path d="M8.39215686,10 L63.9674964,10" id="Line" stroke="#DDDDDD" stroke-width="2" stroke-linecap="square"></path>
