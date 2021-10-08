@@ -32,8 +32,7 @@ module.exports = NodeHelper.create({
           JSON.parse(currentPowerFlow)
         );
       } else {
-        let currentPowerUrl =
-          "https://monitoringapi.solaredge.com/site/" +
+        let currentPowerUrl = payload.config.portalUrl + "/site/" +
           payload.config.siteId +
           "/currentPowerFlow?api_key=" +
           payload.config.apiKey;
@@ -59,8 +58,7 @@ module.exports = NodeHelper.create({
           JSON.parse(details)
         );
       } else {
-        let detailsUrl =
-          "https://monitoringapi.solaredge.com/site/" +
+        let detailsUrl = payload.config.portalUrl + "/site/" +
           payload.config.siteId +
           "/details?api_key=" +
           payload.config.apiKey;
@@ -86,8 +84,7 @@ module.exports = NodeHelper.create({
           JSON.parse(overview)
         );
       } else {
-        let overviewUrl =
-          "https://monitoringapi.solaredge.com/site/" +
+        let overviewUrl = payload.config.portalUrl + "/site/" +
           payload.config.siteId +
           "/overview?api_key=" +
           payload.config.apiKey;
@@ -113,8 +110,7 @@ module.exports = NodeHelper.create({
           JSON.parse(envBenefits)
         );
       } else {
-        let envBenefitsUrl =
-          "https://monitoringapi.solaredge.com/site/" +
+        let envBenefitsUrl = payload.config.portalUrl + "/site/" +
           payload.config.siteId +
           "/envBenefits?api_key=" +
           payload.config.apiKey;
