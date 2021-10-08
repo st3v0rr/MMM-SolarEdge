@@ -32,6 +32,7 @@ var config = {
 |-----------------                  |-----------
 | `apiKey`                          | *Required* An API Key that can be obtained by creating one in your SolarEdge Monitoring Portal https://monitoring.solaredge.com
 | `siteId`                          | *Required* The Site ID of the SolarEdge system you wish to monitor, which can be found in the Dashboard https://monitoring.solaredge.com
+| `portalUrl`                       | *Optional* override in case of a proxy, default is https://monitoring.solaredge.com
 | `updateIntervalBasicData`         | *Optional* Update interval** for the basic data like overview or details, default is 12 hours
 | `updateIntervalGraphics`          | *Optional* Update interval** for the basic data like overview or details, default is 15 minutes
 | `mockData`                        | *Optional* If you like to change something without using the real API, default is false
