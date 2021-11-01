@@ -7,6 +7,7 @@
 
 var NodeHelper = require("node_helper");
 var request = require("request");
+var btoa = require("btoa");
 var fs = require("fs");
 
 module.exports = NodeHelper.create({
@@ -32,12 +33,21 @@ module.exports = NodeHelper.create({
           JSON.parse(currentPowerFlow)
         );
       } else {
-        let currentPowerUrl = payload.config.portalUrl + "/site/" +
+        var currentPowerUrl =
+          payload.config.liveDataUrl +
+          "/solaredge-apigw/api/site/" +
           payload.config.siteId +
-          "/currentPowerFlow?api_key=" +
-          payload.config.apiKey;
-        request(currentPowerUrl, function (error, response, body) {
+          "/currentPowerFlow.json";
+        var auth =
+          "Basic " +
+          btoa(payload.config.userName + ":" + payload.config.userPassword);
+        var options = {
+          url: currentPowerUrl,
+          headers: { Authorization: auth }
+        };
+        request(options, function (error, response, body) {
           if (!error && response.statusCode === 200) {
+            console.log(body);
             self.sendSocketNotification(
               "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_CURRENTPOWER_DATA_RECEIVED",
               JSON.parse(body)
@@ -58,7 +68,9 @@ module.exports = NodeHelper.create({
           JSON.parse(details)
         );
       } else {
-        let detailsUrl = payload.config.portalUrl + "/site/" +
+        let detailsUrl =
+          payload.config.portalUrl +
+          "/site/" +
           payload.config.siteId +
           "/details?api_key=" +
           payload.config.apiKey;
@@ -84,7 +96,9 @@ module.exports = NodeHelper.create({
           JSON.parse(overview)
         );
       } else {
-        let overviewUrl = payload.config.portalUrl + "/site/" +
+        let overviewUrl =
+          payload.config.portalUrl +
+          "/site/" +
           payload.config.siteId +
           "/overview?api_key=" +
           payload.config.apiKey;
@@ -110,7 +124,9 @@ module.exports = NodeHelper.create({
           JSON.parse(envBenefits)
         );
       } else {
-        let envBenefitsUrl = payload.config.portalUrl + "/site/" +
+        let envBenefitsUrl =
+          payload.config.portalUrl +
+          "/site/" +
           payload.config.siteId +
           "/envBenefits?api_key=" +
           payload.config.apiKey;

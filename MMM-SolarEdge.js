@@ -9,18 +9,22 @@
 
 Module.register("MMM-SolarEdge", {
   defaults: {
-    updateInterval: 60000,
+    updateInterval: 5000,
     retryDelay: 5000,
     siteId: undefined,
     apiKey: undefined,
-    updateIntervalBasicData: 1000 * 60 * 60 * 4, //every 4 hours
-    updateIntervalGraphics: 1000 * 60 * 15, //every 15 minutes
-    mockData: false, //for development purposes only!
-	portalUrl: "https://monitoringapi.solaredge.com",
+    userName: undefined,
+    userPassword: undefined,
+    updateIntervalBasicData: 1000 * 60 * 15, //every 15 minutes
+    portalUrl: "https://monitoringapi.solaredge.com",
+    liveDataUrl: "https://monitoring.solaredge.com",
+    showLiveData: true,
+    showOverview: true,
     primes: [
       499, 997, 1499, 1997, 2503, 2999, 3499, 4001, 4493, 4999, 5501, 6007,
       6491, 7001, 7499, 7993, 8501, 8999, 9497, 9773
-    ] //prime factors to avoid api limitation (429) in schedules
+    ], //prime factors to avoid api limitation (429) in schedules
+    mockData: false //for development purposes only!
   },
 
   requiresVersion: "2.1.0", // Required version of MagicMirror
@@ -32,45 +36,43 @@ Module.register("MMM-SolarEdge", {
 
     //Flag for check if module is loaded
     this.loaded = false;
-    //Initially load data
-    self.getCurrentPowerData();
+
+    if (this.config.showLiveData) {
+      self.getCurrentPowerData();
+      setInterval(function () {
+        self.getCurrentPowerData();
+        self.updateDom();
+      }, this.config.updateInterval);
+    }
+
+    if (this.config.showOverview) {
+      setTimeout(
+        () => self.getOverviewData(),
+        this.config.primes.sort(() => Math.random() - 0.5)[0]
+      );
+      setTimeout(
+        () => self.getEnvBenefitsData(),
+        this.config.primes.sort(() => Math.random() - 0.5)[0]
+      );
+
+      setInterval(function () {
+        self.getOverviewData();
+        self.updateDom();
+      }, this.config.updateIntervalBasicData +
+        this.config.primes.sort(() => Math.random() - 0.5)[0]);
+
+      setInterval(function () {
+        self.getEnvBenefitsData();
+        self.updateDom();
+      }, this.config.updateIntervalBasicData +
+        this.config.primes.sort(() => Math.random() - 0.5)[0]);
+    }
+
     setTimeout(
       () => self.getDetailsData(),
       this.config.primes.sort(() => Math.random() - 0.5)[0]
     );
-    setTimeout(
-      () => self.getOverviewData(),
-      this.config.primes.sort(() => Math.random() - 0.5)[0]
-    );
-    setTimeout(
-      () => self.getEnvBenefitsData(),
-      this.config.primes.sort(() => Math.random() - 0.5)[0]
-    );
 
-    // Schedule update timer for CurrentPower.
-    setInterval(function () {
-      self.getCurrentPowerData();
-      self.updateDom();
-    }, this.config.updateInterval);
-
-    // Schedule update timer for Details.
-    setInterval(function () {
-      self.getDetailsData();
-      self.updateDom();
-    }, this.config.updateIntervalBasicData +
-      this.config.primes.sort(() => Math.random() - 0.5)[0]);
-
-    setInterval(function () {
-      self.getOverviewData();
-      self.updateDom();
-    }, this.config.updateIntervalBasicData +
-      this.config.primes.sort(() => Math.random() - 0.5)[0]);
-
-    setInterval(function () {
-      self.getEnvBenefitsData();
-      self.updateDom();
-    }, this.config.updateIntervalBasicData +
-      this.config.primes.sort(() => Math.random() - 0.5)[0]);
     this.loaded = true;
   },
 
@@ -252,7 +254,7 @@ Module.register("MMM-SolarEdge", {
     }
     if (this.dataNotificationOverview) {
       this.titles = [
-        this.translate("YESTERDAY"),
+        this.translate("TODAY"),
         this.translate("THIS_MONTH"),
         this.translate("THIS_YEAR"),
         this.translate("LIFETIME")
