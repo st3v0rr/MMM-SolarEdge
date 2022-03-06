@@ -26,7 +26,7 @@ module.exports = NodeHelper.create({
     ) {
       if (payload.config.mockData) {
         var currentPowerFlow = fs.readFileSync(
-          __dirname + "/mock/currentPowerFlow.json"
+          __dirname + "/mock/currentPowerFlowPvBattery.json"
         );
         self.sendSocketNotification(
           "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_CURRENTPOWER_DATA_RECEIVED",
@@ -106,34 +106,6 @@ module.exports = NodeHelper.create({
           if (!error && response.statusCode === 200) {
             self.sendSocketNotification(
               "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_OVERVIEW_DATA_RECEIVED",
-              JSON.parse(body)
-            );
-          }
-        });
-      }
-    }
-
-    if (
-      notification ===
-      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_ENVBENEFITS_DATA_REQUESTED"
-    ) {
-      if (payload.config.mockData) {
-        var envBenefits = fs.readFileSync(__dirname + "/mock/envBenefits.json");
-        self.sendSocketNotification(
-          "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_ENVBENEFITS_DATA_RECEIVED",
-          JSON.parse(envBenefits)
-        );
-      } else {
-        let envBenefitsUrl =
-          payload.config.portalUrl +
-          "/site/" +
-          payload.config.siteId +
-          "/envBenefits?api_key=" +
-          payload.config.apiKey;
-        request(envBenefitsUrl, function (error, response, body) {
-          if (!error && response.statusCode === 200) {
-            self.sendSocketNotification(
-              "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_ENVBENEFITS_DATA_RECEIVED",
               JSON.parse(body)
             );
           }

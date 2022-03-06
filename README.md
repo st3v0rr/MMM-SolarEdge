@@ -49,10 +49,11 @@ var config = {
 | `portalUrl`                       | *Optional* override in case of a proxy, default is https://monitoringapi.solaredge.com
 | `livaDataUrl`                     | *Optional* override in case of a proxy, default is https://monitoring.solaredge.com
 | `updateIntervalBasicData`         | *Optional* Update interval** for the basic data like overview or details, default is 15 minutes
-| `showLiveData`                    | *Optional* Enables/disables the live data view
 | `showOverview`                    | *Optional* Enables/disables the long term data view
 | `mockData`                        | *Optional* If you like to change something without using the real API, default is false
 ** be aware that with custom params you could reach the daily request limit of the SolarEdge API gateway.
 
 ## Samples
-![alt text](https://github.com/st3v0rr/MMM-SolarEdge/raw/main/docs/SolarEdge.png "Example")
+![alt text](https://github.com/st3v0rr/MMM-SolarEdge/raw/main/docs/SolarEdgePv.png "Example")
+
+![alt text](https://github.com/st3v0rr/MMM-SolarEdge/raw/main/docs/SolarEdgePvBattery.png "Example")

@@ -18,13 +18,13 @@ Module.register("MMM-SolarEdge", {
     updateIntervalBasicData: 1000 * 60 * 15, //every 15 minutes
     portalUrl: "https://monitoringapi.solaredge.com",
     liveDataUrl: "https://monitoring.solaredge.com",
-    showLiveData: true,
     showOverview: true,
+    moduleRelativePath: "modules/MMM-SolarEdge", //workaround for nunjucks image location
     primes: [
       499, 997, 1499, 1997, 2503, 2999, 3499, 4001, 4493, 4999, 5501, 6007,
       6491, 7001, 7499, 7993, 8501, 8999, 9497, 9773
     ], //prime factors to avoid api limitation (429) in schedules
-    mockData: false //for development purposes only!
+    mockData: true //for development purposes only!
   },
 
   requiresVersion: "2.1.0", // Required version of MagicMirror
@@ -37,32 +37,20 @@ Module.register("MMM-SolarEdge", {
     //Flag for check if module is loaded
     this.loaded = false;
 
-    if (this.config.showLiveData) {
+    self.getCurrentPowerData();
+    setInterval(function () {
       self.getCurrentPowerData();
-      setInterval(function () {
-        self.getCurrentPowerData();
-        self.updateDom();
-      }, this.config.updateInterval);
-    }
+      self.updateDom();
+    }, this.config.updateInterval);
 
     if (this.config.showOverview) {
       setTimeout(
         () => self.getOverviewData(),
         this.config.primes.sort(() => Math.random() - 0.5)[0]
       );
-      setTimeout(
-        () => self.getEnvBenefitsData(),
-        this.config.primes.sort(() => Math.random() - 0.5)[0]
-      );
 
       setInterval(function () {
         self.getOverviewData();
-        self.updateDom();
-      }, this.config.updateIntervalBasicData +
-        this.config.primes.sort(() => Math.random() - 0.5)[0]);
-
-      setInterval(function () {
-        self.getEnvBenefitsData();
         self.updateDom();
       }, this.config.updateIntervalBasicData +
         this.config.primes.sort(() => Math.random() - 0.5)[0]);
@@ -103,59 +91,6 @@ Module.register("MMM-SolarEdge", {
     );
   },
 
-  getEnvBenefitsData: function () {
-    this.sendSocketNotification(
-      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_ENVBENEFITS_DATA_REQUESTED",
-      {
-        config: this.config
-      }
-    );
-  },
-
-  createBlock: function (power, status, imagePath) {
-    var wrapper = document.createElement("div");
-    wrapper.classList.add("solaredge-container-block");
-
-    var wrapperImage = document.createElement("div");
-    var image = document.createElement("img");
-    image.src = this.data.path + imagePath;
-    wrapperImage.appendChild(image);
-
-    var wrapperData;
-    if (status !== "Idle") {
-      wrapperData = document.createElement("div");
-      wrapperData.classList.add("small");
-      wrapperData.innerHTML =
-        power +
-        " " +
-        this.dataNotificationCurrentPower.siteCurrentPowerFlow.unit;
-    } else {
-      wrapperData = document.createElement("div");
-      wrapperData.classList.add("small");
-      wrapperData.classList.add("solaredge-color-stand-by");
-      wrapperData.innerHTML = this.translate("STAND_BY");
-    }
-
-    wrapper.appendChild(wrapperImage);
-    wrapper.appendChild(wrapperData);
-    return wrapper;
-  },
-
-  createArrowBlock: function (direction, color) {
-    var wrapper = document.createElement("div");
-    wrapper.classList.add("solaredge-container-arrow-block");
-
-    if (direction && color) {
-      var image = document.createElement("img");
-      image.src =
-        this.data.path + "images/arrow_" + direction + "_" + color + ".svg";
-
-      wrapper.appendChild(image);
-    }
-
-    return wrapper;
-  },
-
   getArrowConnections: function (connections) {
     return connections.map(
       (connection) =>
@@ -183,165 +118,161 @@ Module.register("MMM-SolarEdge", {
     return title;
   },
 
-  getDom: function () {
-    // create element wrapper for show into the module
-    var wrapper = document.createElement("div");
+  getTemplate: function () {
+    if (
+      this.config.apiKey === "" ||
+      this.config.siteId === "" ||
+      this.config.userName === "" ||
+      this.config.userPassword === "" ||
+      !this.loaded
+    ) {
+      return "templates/default.njk";
+    }
+    if (this.dataNotificationCurrentPower !== undefined) {
+      if (
+        this.dataNotificationCurrentPower.siteCurrentPowerFlow.STORAGE !==
+        undefined
+      ) {
+        return "templates/pvbattery.njk";
+      } else {
+        return "templates/pv.njk";
+      }
+    }
+    return "templates/default.njk";
+  },
+
+  getTemplateData: function () {
     if (this.config.apiKey === "" || this.config.siteId === "") {
-      wrapper.innerHTML = "Missing configuration for MMM-SolarEdge.";
-      return wrapper;
+      return {
+        status: "Missing configuration for MMM-SolarEdge.",
+        config: this.config
+      };
     }
     if (!this.loaded) {
-      wrapper.innerHTML = "Loading MMM-SolarEdge...";
-      return wrapper;
+      return {
+        status: "Loading MMM-SolarEdge...",
+        config: this.config
+      };
     }
 
-    // Data from helper
-    if (this.dataNotificationCurrentPower) {
-      var allArrowConnections = this.getArrowConnections(
-        this.dataNotificationCurrentPower.siteCurrentPowerFlow.connections
-      );
-
-      var wrapperCurrentPowerData = document.createElement("div");
-      wrapperCurrentPowerData.classList.add("solaredge-container");
-
-      var wrapperPv = this.createBlock(
-        this.dataNotificationCurrentPower.siteCurrentPowerFlow.PV.currentPower
-          .toFixed(2)
-          .replace(".", ","),
-        this.dataNotificationCurrentPower.siteCurrentPowerFlow.PV.status,
-        "images/pv.svg"
-      );
-
-      var wrapperArrowPvHome;
-      if (allArrowConnections.includes("pv_load")) {
-        wrapperArrowPvHome = this.createArrowBlock("right", "green");
-      } else {
-        wrapperArrowPvHome = this.createArrowBlock();
-      }
-
-      var wrapperHome = this.createBlock(
-        this.dataNotificationCurrentPower.siteCurrentPowerFlow.LOAD.currentPower
-          .toFixed(2)
-          .replace(".", ","),
-        this.dataNotificationCurrentPower.siteCurrentPowerFlow.LOAD.status,
-        "images/home.svg"
-      );
-
-      var wrapperArrowHomeGrid;
-      if (allArrowConnections.includes("load_grid")) {
-        wrapperArrowHomeGrid = this.createArrowBlock("right", "green");
-      } else if (allArrowConnections.includes("grid_load")) {
-        wrapperArrowHomeGrid = this.createArrowBlock("left", "red");
-      } else {
-        wrapperArrowHomeGrid = this.createArrowBlock();
-      }
-
-      var wrapperGrid = this.createBlock(
-        this.dataNotificationCurrentPower.siteCurrentPowerFlow.GRID.currentPower
-          .toFixed(2)
-          .replace(".", ","),
-        this.dataNotificationCurrentPower.siteCurrentPowerFlow.GRID.status,
-        "images/grid.svg"
-      );
-
-      wrapperCurrentPowerData.appendChild(wrapperPv);
-      wrapperCurrentPowerData.appendChild(wrapperArrowPvHome);
-      wrapperCurrentPowerData.appendChild(wrapperHome);
-      wrapperCurrentPowerData.appendChild(wrapperArrowHomeGrid);
-      wrapperCurrentPowerData.appendChild(wrapperGrid);
-
-      wrapper.appendChild(wrapperCurrentPowerData);
+    if (this.dataNotificationCurrentPower !== undefined) {
+      console.log({
+        config: this.config,
+        translations: {
+          today: this.translate("TODAY"),
+          this_month: this.translate("THIS_MONTH"),
+          this_year: this.translate("THIS_YEAR")
+        },
+        arrowDirections: this.mapArrowDirections(),
+        powerAndStatus: this.mapCurrentPowerAndStatus(),
+        lifeTimeData: this.mapLifeTime()
+      });
+      return {
+        config: this.config,
+        translations: {
+          today: this.translate("TODAY"),
+          this_month: this.translate("THIS_MONTH"),
+          this_year: this.translate("THIS_YEAR")
+        },
+        arrowDirections: this.mapArrowDirections(),
+        powerAndStatus: this.mapCurrentPowerAndStatus(),
+        lifeTimeData: this.mapLifeTime()
+      };
     }
+
+    return {
+      status: "Loading MMM-SolarEdge...",
+      config: this.config
+    };
+  },
+
+  mapArrowDirections: function () {
+    var allArrowConnections = this.getArrowConnections(
+      this.dataNotificationCurrentPower.siteCurrentPowerFlow.connections
+    );
+    var arrowPvLoad = "none";
+    if (allArrowConnections.includes("pv_load")) {
+      arrowPvLoad = "right_green";
+    }
+    var arrowStorageLoad = "none";
+    if (allArrowConnections.includes("pv_storage")) {
+      arrowStorageLoad = "left_green";
+    } else if (allArrowConnections.includes("storage_load")) {
+      arrowStorageLoad = "right_green";
+    } else if (allArrowConnections.includes("load_storage")) {
+      arrowStorageLoad = "left_red";
+    }
+    var arrowGridLoad = "none";
+    if (allArrowConnections.includes("load_grid")) {
+      arrowGridLoad = "right_green";
+    } else if (allArrowConnections.includes("grid_load")) {
+      arrowGridLoad = "left_red";
+    }
+    return {
+      arrowPvLoad,
+      arrowStorageLoad,
+      arrowGridLoad
+    };
+  },
+
+  mapCurrentPowerAndStatus: function () {
+    var powerAndStatus = this.dataNotificationCurrentPower.siteCurrentPowerFlow;
+    var storage;
+    if (powerAndStatus.STORAGE !== undefined) {
+      storage = {
+        power: powerAndStatus.STORAGE.currentPower.toFixed(2).replace(".", ","),
+        status: powerAndStatus.STORAGE.status,
+        chargeLevel: powerAndStatus.STORAGE.chargeLevel,
+        chargeLevelVisual: {
+          rectFillValue: (
+            54 * //hardcoded end of battery svg position
+            (powerAndStatus.STORAGE.chargeLevel / 100)
+          ).toFixed(0),
+          rectFillColor: this.getChargeColor(
+            powerAndStatus.STORAGE.chargeLevel / 100
+          )
+        }
+      };
+    }
+    return {
+      pv: {
+        power: powerAndStatus.PV.currentPower.toFixed(2).replace(".", ","),
+        status: powerAndStatus.PV.status
+      },
+      storage,
+      load: {
+        power: powerAndStatus.LOAD.currentPower.toFixed(2).replace(".", ","),
+        status: powerAndStatus.LOAD.status
+      },
+      grid: {
+        power: powerAndStatus.GRID.currentPower.toFixed(2).replace(".", ","),
+        status: powerAndStatus.GRID.status
+      },
+      unit: powerAndStatus.unit
+    };
+  },
+
+  mapLifeTime: function () {
     if (this.dataNotificationOverview) {
-      this.titles = [
-        this.translate("TODAY"),
-        this.translate("THIS_MONTH"),
-        this.translate("THIS_YEAR"),
-        this.translate("LIFETIME")
-      ];
-      this.results = [];
-      this.results.push(
-        (this.dataNotificationOverview.overview.lastDayData.energy / 1000)
+      var lifeTime = this.dataNotificationOverview.overview;
+      return {
+        today: (lifeTime.lastDayData.energy / 1000)
           .toFixed(2)
-          .replace(".", ",") + " kWh"
-      );
-      this.results.push(
-        (this.dataNotificationOverview.overview.lastMonthData.energy / 1000)
+          .replace(".", ","),
+        this_month: (lifeTime.lastMonthData.energy / 1000)
           .toFixed(2)
-          .replace(".", ",") + " kWh"
-      );
-      this.results.push(
-        (this.dataNotificationOverview.overview.lastYearData.energy / 1000)
+          .replace(".", ","),
+        this_year: (lifeTime.lastYearData.energy / 1000)
           .toFixed(2)
-          .replace(".", ",") + " kWh"
-      );
-      this.results.push(
-        (this.dataNotificationOverview.overview.lifeTimeData.energy / 1000)
-          .toFixed(2)
-          .replace(".", ",") + " kWh"
-      );
-
-      var wrapperCurrentOverviewData = document.createElement("div");
-      wrapperCurrentOverviewData.classList.add("solaredge-limit-width");
-
-      var tb = document.createElement("table");
-      tb.classList.add("solaredge-border-top-bottom");
-
-      for (var i = 0; i < this.results.length; i++) {
-        var row = document.createElement("tr");
-
-        var titleTr = document.createElement("td");
-        var dataTr = document.createElement("td");
-
-        titleTr.innerHTML = this.titles[i];
-        titleTr.classList.add("solaredge-text-align-left");
-        titleTr.classList.add("light");
-        dataTr.innerHTML = this.results[i];
-        dataTr.classList.add("solaredge-text-align-right");
-
-        row.appendChild(titleTr);
-        row.appendChild(dataTr);
-
-        tb.appendChild(row);
-        wrapperCurrentOverviewData.appendChild(tb);
-      }
-      if (this.dataNotificationEnvBenefits) {
-        var envtb = document.createElement("table");
-        envtb.classList.add("solaredge-limit-width");
-        envtb.classList.add("solaredge-border-top-bottom");
-        var envRow = document.createElement("tr");
-
-        var envTitleTr = document.createElement("td");
-        var endDataTr1 = document.createElement("td");
-        var endDataTr2 = document.createElement("td");
-
-        envTitleTr.innerHTML =
-          Math.round(
-            this.dataNotificationEnvBenefits.envBenefits.gasEmissionSaved.co2
-          ) +
-          " kg CO2 " +
-          this.translate("SAVED");
-        envTitleTr.classList.add("solaredge-text-align-left");
-        endDataTr1.innerHTML = this.translate("OR");
-        endDataTr2.innerHTML =
-          Math.round(
-            this.dataNotificationEnvBenefits.envBenefits.treesPlanted
-          ) +
-          " " +
-          this.translate("TREES_PLANTED");
-        endDataTr2.classList.add("solaredge-text-align-right");
-
-        envRow.appendChild(envTitleTr);
-        envRow.appendChild(endDataTr1);
-        envRow.appendChild(endDataTr2);
-
-        envtb.appendChild(envRow);
-        wrapperCurrentOverviewData.appendChild(envtb);
-      }
-
-      wrapper.appendChild(wrapperCurrentOverviewData);
+          .replace(".", ",")
+      };
     }
-    return wrapper;
+  },
+
+  getChargeColor: function (chargeLevel) {
+    //value from 0 to 1
+    var hue = (chargeLevel * 120).toString(10);
+    return ["hsl(", hue, ",100%,20%)"].join("");
   },
 
   getScripts: function () {
@@ -386,15 +317,6 @@ Module.register("MMM-SolarEdge", {
     ) {
       // set dataNotification
       this.dataNotificationOverview = payload;
-      this.updateDom();
-    }
-
-    if (
-      notification ===
-      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_ENVBENEFITS_DATA_RECEIVED"
-    ) {
-      // set dataNotification
-      this.dataNotificationEnvBenefits = payload;
       this.updateDom();
     }
   }

@@ -1,0 +1,38 @@
+{
+	"siteCurrentPowerFlow": {
+		"updateRefreshRate": 3,
+		"unit": "kW",
+		"connections": [
+			{
+				"from": "GRID",
+				"to": "Load"
+			},
+			{
+				"from": "PV",
+				"to": "Load"
+			},
+			{
+				"from": "PV",
+				"to": "Storage"
+			}
+		],
+		"GRID": {
+			"status": "Active",
+			"currentPower": 0.04
+		},
+		"LOAD": {
+			"status": "Active",
+			"currentPower": 1.58
+		},
+		"PV": {
+			"status": "Active",
+			"currentPower": 1.69
+		},
+		"STORAGE": {
+			"status": "Charging",
+			"currentPower": 0.15,
+			"chargeLevel": 98,
+			"critical": false
+		}
+	}
+}

@@ -1,33 +1,33 @@
 .solaredge-container {
+  width: 100%;
+  max-width: 500px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.solaredge-row {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
 }
 
-.solaredge-container-block {
-  width: 120px;
-  height: 120px;
-  margin: 10px;
+.solaredge-col {
+  flex: 1 0 0;
 }
 
-.solaredge-container-arrow-block {
-  width: 60px;
-  height: 120px;
-  margin-top: 50px;
+.solaredge-mid {
+  max-width: 30%;
+}
+
+.solaredge-align-self-center {
+  align-self: center;
+  text-align: center;
 }
 
 .solaredge-color-stand-by {
   color: darkred;
 }
 
-.solaredge-limit-width {
-  width: 480px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.solaredge-border-top-bottom {
-  border-top: 1px solid var(--color-text-dimmed);
+.solaredge-border-bottom {
   border-bottom: 1px solid var(--color-text-dimmed);
 }
 
@@ -37,4 +37,9 @@
 
 .solaredge-text-align-right {
   text-align: right;
+}
+
+.solaredge-chargelevel-relative {
+  position: relative;
+  top: 30px;
 }
