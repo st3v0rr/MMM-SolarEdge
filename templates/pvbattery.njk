@@ -45,11 +45,11 @@
                         </g>
                     </svg>
                   </div>
-                  {% if powerAndStatus.pv.status != "Idle" %}
+                  {% if powerAndStatus.storage.status != "Idle" %}
                     <div class="small">{{ powerAndStatus.storage.power }} {{ powerAndStatus.unit }}</div>
                   {% endif %}
-                  {% if powerAndStatus.pv.status == "Idle" %}
-                    <div class="small solaredge-color-stand-by">{{ powerAndStatus.pv.status }}</div>
+                  {% if powerAndStatus.storage.status == "Idle" %}
+                    <div class="small solaredge-color-stand-by">{{ powerAndStatus.storage.status }}</div>
                   {% endif %}
                 </div>
                 <div class="solaredge-col solaredge-mid solaredge-align-self-center">
