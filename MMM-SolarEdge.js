@@ -24,7 +24,7 @@ Module.register("MMM-SolarEdge", {
       499, 997, 1499, 1997, 2503, 2999, 3499, 4001, 4493, 4999, 5501, 6007,
       6491, 7001, 7499, 7993, 8501, 8999, 9497, 9773
     ], //prime factors to avoid api limitation (429) in schedules
-    mockData: true //for development purposes only!
+    mockData: false //for development purposes only!
   },
 
   requiresVersion: "2.1.0", // Required version of MagicMirror
