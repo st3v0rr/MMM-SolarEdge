@@ -156,23 +156,13 @@ Module.register("MMM-SolarEdge", {
     }
 
     if (this.dataNotificationCurrentPower !== undefined) {
-      console.log({
-        config: this.config,
-        translations: {
-          today: this.translate("TODAY"),
-          this_month: this.translate("THIS_MONTH"),
-          this_year: this.translate("THIS_YEAR")
-        },
-        arrowDirections: this.mapArrowDirections(),
-        powerAndStatus: this.mapCurrentPowerAndStatus(),
-        lifeTimeData: this.mapLifeTime()
-      });
       return {
         config: this.config,
         translations: {
           today: this.translate("TODAY"),
           this_month: this.translate("THIS_MONTH"),
-          this_year: this.translate("THIS_YEAR")
+          this_year: this.translate("THIS_YEAR"),
+          stand_by: this.translate("STAND_BY")
         },
         arrowDirections: this.mapArrowDirections(),
         powerAndStatus: this.mapCurrentPowerAndStatus(),
