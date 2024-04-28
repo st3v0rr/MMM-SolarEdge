@@ -100,20 +100,26 @@ Module.register("MMM-SolarEdge", {
 
   getHeader: function () {
     var title;
-    if (this.dataNotificationDetails) {
-      title =
-        this.translate("TITLE") +
-        " - " +
-        this.dataNotificationDetails.details.location.address +
-        ", " +
-        this.dataNotificationDetails.details.location.city +
-        " - " +
-        this.dataNotificationDetails.details.peakPower
-          .toFixed(2)
-          .replace(".", ",") +
-        " KWP";
+    if (this.data.header) {
+      // Static header from config
+      title = this.data.header;
     } else {
-      title = this.translate("TITLE");
+      // Header with SolarEdge Data
+      if (this.dataNotificationDetails) {
+        title =
+          this.translate("TITLE") +
+          " - " +
+          this.dataNotificationDetails.details.location.address +
+          ", " +
+          this.dataNotificationDetails.details.location.city +
+          " - " +
+          this.dataNotificationDetails.details.peakPower
+            .toFixed(2)
+            .replace(".", ",") +
+          " KWP";
+      } else {
+        title = this.translate("TITLE");
+      }
     }
     return title;
   },
@@ -277,7 +283,8 @@ Module.register("MMM-SolarEdge", {
   getTranslations: function () {
     return {
       en: "translations/en.json",
-      de: "translations/de.json"
+      de: "translations/de.json",
+      fr: "translations/fr.json"
     };
   },
 

@@ -21,9 +21,5 @@
 		"prettier-eslint-cli": "^5.0.1",
 		"stylelint-config-standard": "latest",
 		"time-grunt": "latest"
-	},
-	"dependencies": {
-		"btoa": "^1.2.1",
-		"request": "^2.88.2"
 	}
 }
