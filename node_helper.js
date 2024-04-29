@@ -7,6 +7,7 @@
 
 var NodeHelper = require("node_helper");
 var https = require("https");
+var http = require("http");
 var fs = require("fs");
 
 module.exports = NodeHelper.create({
@@ -32,6 +33,9 @@ module.exports = NodeHelper.create({
           JSON.parse(currentPowerFlow)
         );
       } else {
+        var liveDataClient = payload.config.liveDataUrl.startsWith("https")
+          ? https
+          : http;
         var currentPowerUrl =
           payload.config.liveDataUrl +
           "/solaredge-apigw/api/site/" +
@@ -39,18 +43,22 @@ module.exports = NodeHelper.create({
           "/currentPowerFlow.json";
         var auth =
           "Basic " +
-          Buffer.from(payload.config.userName + ":" + payload.config.userPassword).toString('base64')
+          Buffer.from(
+            payload.config.userName + ":" + payload.config.userPassword
+          ).toString("base64");
         var options = {
           headers: { Authorization: auth }
         };
-        https.get(currentPowerUrl, options, (res) => {
-          res.on('data', (d) => {
-            self.sendSocketNotification(
-              "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_CURRENTPOWER_DATA_RECEIVED",
-              JSON.parse(d)
-            );
-          });
-          }).on('error', (e) => {
+        liveDataClient
+          .get(currentPowerUrl, options, (res) => {
+            res.on("data", (d) => {
+              self.sendSocketNotification(
+                "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_CURRENTPOWER_DATA_RECEIVED",
+                JSON.parse(d)
+              );
+            });
+          })
+          .on("error", (e) => {
             console.error(e);
           });
       }
@@ -67,6 +75,9 @@ module.exports = NodeHelper.create({
           JSON.parse(details)
         );
       } else {
+        var portalDataClient = payload.config.liveDataUrl.startsWith("https")
+          ? https
+          : http;
         let detailsUrl =
           payload.config.portalUrl +
           "/site/" +
@@ -74,14 +85,16 @@ module.exports = NodeHelper.create({
           "/details?api_key=" +
           payload.config.apiKey;
 
-        https.get(detailsUrl, (res) => {
-          res.on('data', (d) => {
-            self.sendSocketNotification(
-              "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DETAILS_DATA_RECEIVED",
-              JSON.parse(d)
-            );
-          });
-          }).on('error', (e) => {
+        portalDataClient
+          .get(detailsUrl, (res) => {
+            res.on("data", (d) => {
+              self.sendSocketNotification(
+                "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DETAILS_DATA_RECEIVED",
+                JSON.parse(d)
+              );
+            });
+          })
+          .on("error", (e) => {
             console.error(e);
           });
       }
@@ -98,20 +111,25 @@ module.exports = NodeHelper.create({
           JSON.parse(overview)
         );
       } else {
+        var portalDataClient = payload.config.liveDataUrl.startsWith("https")
+          ? https
+          : http;
         let overviewUrl =
           payload.config.portalUrl +
           "/site/" +
           payload.config.siteId +
           "/overview?api_key=" +
           payload.config.apiKey;
-        https.get(overviewUrl, (res) => {
-          res.on('data', (d) => {
-            self.sendSocketNotification(
-              "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_OVERVIEW_DATA_RECEIVED",
-              JSON.parse(d)
-            );
-          });
-          }).on('error', (e) => {
+        portalDataClient
+          .get(overviewUrl, (res) => {
+            res.on("data", (d) => {
+              self.sendSocketNotification(
+                "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_OVERVIEW_DATA_RECEIVED",
+                JSON.parse(d)
+              );
+            });
+          })
+          .on("error", (e) => {
             console.error(e);
           });
       }
