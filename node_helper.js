@@ -6,8 +6,7 @@
  */
 
 var NodeHelper = require("node_helper");
-var request = require("request");
-var btoa = require("btoa");
+var https = require("https");
 var fs = require("fs");
 
 module.exports = NodeHelper.create({
@@ -40,20 +39,20 @@ module.exports = NodeHelper.create({
           "/currentPowerFlow.json";
         var auth =
           "Basic " +
-          btoa(payload.config.userName + ":" + payload.config.userPassword);
+          Buffer.from(payload.config.userName + ":" + payload.config.userPassword).toString('base64')
         var options = {
-          url: currentPowerUrl,
           headers: { Authorization: auth }
         };
-        request(options, function (error, response, body) {
-          if (!error && response.statusCode === 200) {
-            console.log(body);
+        https.get(currentPowerUrl, options, (res) => {
+          res.on('data', (d) => {
             self.sendSocketNotification(
               "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_CURRENTPOWER_DATA_RECEIVED",
-              JSON.parse(body)
+              JSON.parse(d)
             );
-          }
-        });
+          });
+          }).on('error', (e) => {
+            console.error(e);
+          });
       }
     }
 
@@ -74,14 +73,17 @@ module.exports = NodeHelper.create({
           payload.config.siteId +
           "/details?api_key=" +
           payload.config.apiKey;
-        request(detailsUrl, function (error, response, body) {
-          if (!error && response.statusCode === 200) {
+
+        https.get(detailsUrl, (res) => {
+          res.on('data', (d) => {
             self.sendSocketNotification(
               "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DETAILS_DATA_RECEIVED",
-              JSON.parse(body)
+              JSON.parse(d)
             );
-          }
-        });
+          });
+          }).on('error', (e) => {
+            console.error(e);
+          });
       }
     }
 
@@ -102,14 +104,16 @@ module.exports = NodeHelper.create({
           payload.config.siteId +
           "/overview?api_key=" +
           payload.config.apiKey;
-        request(overviewUrl, function (error, response, body) {
-          if (!error && response.statusCode === 200) {
+        https.get(overviewUrl, (res) => {
+          res.on('data', (d) => {
             self.sendSocketNotification(
               "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_OVERVIEW_DATA_RECEIVED",
-              JSON.parse(body)
+              JSON.parse(d)
             );
-          }
-        });
+          });
+          }).on('error', (e) => {
+            console.error(e);
+          });
       }
     }
   }
