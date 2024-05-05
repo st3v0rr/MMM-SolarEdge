@@ -1,4 +1,4 @@
-<div class="solaredge-container">
+<div class="solaredge-container {{ 'solaredge-compact' if config.compactMode }}">
   <div class="solaredge-row solaredge-border-bottom">
     <div class="solaredge-col">
       <div class="solaredge-container">
@@ -8,7 +8,7 @@
               <div class="solaredge-row">
                 <div class="solaredge-col solaredge-align-self-center">
                   {% if powerAndStatus.pv.status != "Idle" %}
-                    <div class="small">{{ powerAndStatus.pv.power }} {{ powerAndStatus.unit }}</div>
+                    <div class="small bright">{{ powerAndStatus.pv.power }} {{ powerAndStatus.unit }}</div>
                   {% endif %}
                   {% if powerAndStatus.pv.status == "Idle" %}
                     <div class="small solaredge-color-stand-by">{{ translations.stand_by }}</div>
@@ -31,7 +31,7 @@
                 <div class="solaredge-col solaredge-align-self-center">
                   <div class="solaredge-chargelevel-relative">{{ powerAndStatus.storage.chargeLevel }} %</div>
                   <div>
-                    <svg width="72px" height="72px" viewBox="0 0 97 96" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                    <svg width="96px" height="96px" viewBox="0 0 96 96" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                         <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
                             <g id="BATTERIES" transform="translate(0.000000, -378.000000)" fill-rule="nonzero">
                                 <g id="ico_bat_80" transform="translate(0.000000, 378.000000)">
@@ -46,7 +46,7 @@
                     </svg>
                   </div>
                   {% if powerAndStatus.storage.status != "Idle" %}
-                    <div class="small">{{ powerAndStatus.storage.power }} {{ powerAndStatus.unit }}</div>
+                    <div class="small bright">{{ powerAndStatus.storage.power }} {{ powerAndStatus.unit }}</div>
                   {% endif %}
                   {% if powerAndStatus.storage.status == "Idle" %}
                     <div class="small solaredge-color-stand-by">{{ translations.stand_by }}</div>
@@ -65,7 +65,7 @@
     </div>
     <div class="solaredge-col solaredge-mid solaredge-align-self-center">
       <div><img src="{{ config.moduleRelativePath }}/images/home.svg"></div>
-      <div class="small">{{ powerAndStatus.load.power }} {{ powerAndStatus.unit }}</div>
+      <div class="small bright">{{ powerAndStatus.load.power }} {{ powerAndStatus.unit }}</div>
     </div>
     <div class="solaredge-col solaredge-align-self-center">
       <div class="solaredge-col solaredge-align-self-center">
@@ -78,7 +78,7 @@
             </div>
             <div class="solaredge-col solaredge-align-self-center">
               <div><img src="{{ config.moduleRelativePath }}/images/grid.svg"></div>
-              <div class="small">{{ powerAndStatus.grid.power }} {{ powerAndStatus.unit }}</div>
+              <div class="small bright">{{ powerAndStatus.grid.power }} {{ powerAndStatus.unit }}</div>
             </div>
           </div>
         </div>

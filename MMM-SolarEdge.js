@@ -19,6 +19,7 @@ Module.register("MMM-SolarEdge", {
     portalUrl: "https://monitoringapi.solaredge.com",
     liveDataUrl: "https://monitoring.solaredge.com",
     showOverview: true,
+    compactMode: false,
     moduleRelativePath: "modules/MMM-SolarEdge", //workaround for nunjucks image location
     primes: [
       499, 997, 1499, 1997, 2503, 2999, 3499, 4001, 4493, 4999, 5501, 6007,
