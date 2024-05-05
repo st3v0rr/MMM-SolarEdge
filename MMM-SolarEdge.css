@@ -43,3 +43,16 @@
   position: relative;
   top: 30px;
 }
+
+.solaredge-compact {
+  margin-top: -10px;
+}
+
+.solaredge-compact .solaredge-mid {
+  max-width: 26.8%;
+}
+
+.solaredge-compact img {
+  width: 50%;
+  height: 50%;
+}

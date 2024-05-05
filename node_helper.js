@@ -134,5 +134,52 @@ module.exports = NodeHelper.create({
           });
       }
     }
+
+    if (
+      notification ===
+      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DAY_ENERGY_DATA_REQUESTED"
+    ) {
+      if (payload.config.mockData) {
+        var overview = fs.readFileSync(__dirname + "/mock/dayEnergy.json");
+        self.sendSocketNotification(
+          "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DAY_ENERGY_DATA_RECEIVED",
+          JSON.parse(overview)
+        );
+      } else {
+        var portalDataClient = payload.config.liveDataUrl.startsWith("https")
+          ? https
+          : http;
+        const todayStr = self.formatDate(new Date(), "YYYY-MM-DD");
+        let overviewUrl =
+          payload.config.portalUrl +
+          "/site/" +
+          payload.config.siteId +
+          "/energyDetails?" +
+          "meters=Production,Consumption,SelfConsumption,FeedIn,Purchased" +
+          "&timeUnit=DAY" +
+          "&startTime=" + todayStr + " 00:00:00" +
+          "&endTime=" + todayStr + " 23:59:59" +
+          "&api_key=" + payload.config.apiKey;
+        portalDataClient
+          .get(overviewUrl, (res) => {
+            res.on("data", (d) => {
+              self.sendSocketNotification(
+                "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DAY_ENERGY_DATA_RECEIVED",
+                JSON.parse(d)
+              );
+            });
+          })
+          .on("error", (e) => {
+            console.error(e);
+          });
+      }
+    }
+  },
+
+  formatDate: function(date, format) {
+    let month = date.getMonth() + 1;
+    return format.replace('YYYY', date.getFullYear())
+    .replace('MM', month.toString().padStart(2, '0'))
+	  .replace('DD', date.getDate().toString().padStart(2, '0'));
   }
 });

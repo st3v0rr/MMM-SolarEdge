@@ -7,5 +7,10 @@
 	"LIFETIME": "Lifetime",
 	"OR": "or",
 	"SAVED": "saved",
-	"TREES_PLANTED": "trees planted"
+	"TREES_PLANTED": "trees planted",
+	"CONSUMPTION": "Consumption",
+	"PRODUCTION": "Production",
+	"FEED_IN": "Feed in",
+	"PURCHASED": "Purchased",
+	"SELF_CONSUMPTION": "Self consumpt."
 }
