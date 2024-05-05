@@ -1,63 +1,46 @@
-<div class="solaredge-container {{ 'solaredge-compact' if config.compactMode }}">
-  <div class="solaredge-row solaredge-border-bottom">
-    <div class="solaredge-col solaredge-align-self-center">
-      <div class="solaredge-container">
-        <div class="solaredge-row">
-          <div class="solaredge-col solaredge-align-self-center">
-              <div><img src="{{ config.moduleRelativePath }}/images/pv.svg"></div>
-              {% if powerAndStatus.pv.status != "Idle" %}
-                <div class="small bright">{{ powerAndStatus.pv.power }} {{ powerAndStatus.unit }}</div>
-              {% endif %}
-              {% if powerAndStatus.pv.status == "Idle" %}
-                <div class="small solaredge-color-stand-by">{{ translations.stand_by }}</div>
-              {% endif %}
-            </div>
-            <div class="solaredge-col solaredge-mid solaredge-align-self-center">
-              {% if arrowDirections.arrowPvLoad != "none" %}
-                <div><img src="{{ config.moduleRelativePath }}/images/arrow_{{ arrowDirections.arrowPvLoad }}.svg"></div>
-              {% endif %}
-            </div>
-          </div>
-      </div>
-    </div>
-    <div class="solaredge-col solaredge-mid solaredge-align-self-center">
-      <div><img src="{{ config.moduleRelativePath }}/images/home.svg"></div>
-      <div class="small bright">{{ powerAndStatus.load.power }} {{ powerAndStatus.unit }}</div>
-    </div>
-    <div class="solaredge-col solaredge-align-self-center">
-      <div class="solaredge-container">
-        <div class="solaredge-row">
-          <div class="solaredge-col solaredge-mid solaredge-align-self-center">
-            {% if arrowDirections.arrowGridLoad != "none" %}
-              <div><img src="{{ config.moduleRelativePath }}/images/arrow_{{ arrowDirections.arrowGridLoad }}.svg"></div>
-            {% endif %}
-          </div>
-          <div class="solaredge-col solaredge-align-self-center">
-            <div><img src="{{ config.moduleRelativePath }}/images/grid.svg"></div>
-            <div class="small bright">{{ powerAndStatus.grid.power }} {{ powerAndStatus.unit }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% if lifeTimeData %}
+{% extends "templates/parent.njk" %}
+
+{% block pv_installation %}
     <div class="solaredge-row solaredge-border-bottom">
       <div class="solaredge-col solaredge-align-self-center">
         <div class="solaredge-container">
           <div class="solaredge-row">
-            <div class="solaredge-col solaredge-text-align-left title bright">{{ translations.today }}</div>
-            <div class="solaredge-col solaredge-text-align-right time light">{{ lifeTimeData.today }} kWh</div>
-          </div>
+            <div class="solaredge-col solaredge-align-self-center">
+                <div><img src="{{ config.moduleRelativePath }}/images/pv.svg"></div>
+                {% if powerAndStatus.pv.status != "Idle" %}
+                  <div class="small bright">{{ powerAndStatus.pv.power }} {{ powerAndStatus.unit }}</div>
+                {% endif %}
+                {% if powerAndStatus.pv.status == "Idle" %}
+                  <div class="small solaredge-color-stand-by">{{ "STAND_BY" | translate }}</div>
+                {% endif %}
+              </div>
+              <div class="solaredge-col solaredge-mid solaredge-align-self-center">
+                {% if arrowDirections.arrowPvLoad != "none" %}
+                  <div><img src="{{ config.moduleRelativePath }}/images/arrow_{{ arrowDirections.arrowPvLoad }}.svg"></div>
+                {% endif %}
+              </div>
+            </div>
+        </div>
+      </div>
+      <div class="solaredge-col solaredge-mid solaredge-align-self-center">
+        <div><img src="{{ config.moduleRelativePath }}/images/home.svg"></div>
+        <div class="small bright">{{ powerAndStatus.load.power }} {{ powerAndStatus.unit }}</div>
+      </div>
+      <div class="solaredge-col solaredge-align-self-center">
+        <div class="solaredge-container">
           <div class="solaredge-row">
-            <div class="solaredge-col solaredge-text-align-left title bright">{{ translations.this_month }}</div>
-            <div class="solaredge-col solaredge-text-align-right time light">{{ lifeTimeData.this_month }} kWh</div>
-          </div>
-          <div class="solaredge-row">
-            <div class="solaredge-col solaredge-text-align-left title bright">{{ translations.this_year }}</div>
-            <div class="solaredge-col solaredge-text-align-right time light">{{ lifeTimeData.this_year }} kWh</div>
+            <div class="solaredge-col solaredge-mid solaredge-align-self-center">
+              {% if arrowDirections.arrowGridLoad != "none" %}
+                <div><img src="{{ config.moduleRelativePath }}/images/arrow_{{ arrowDirections.arrowGridLoad }}.svg"></div>
+              {% endif %}
+            </div>
+            <div class="solaredge-col solaredge-align-self-center">
+              <div><img src="{{ config.moduleRelativePath }}/images/grid.svg"></div>
+              <div class="small bright">{{ powerAndStatus.grid.power }} {{ powerAndStatus.unit }}</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  {% endif %}
-</div>
+{% endblock %}
+
