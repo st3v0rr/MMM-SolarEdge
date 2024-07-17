@@ -48,8 +48,9 @@ var config = {
 | `userPassword`                    | *Required* SolarEdge Monitoring Portal Password
 | `portalUrl`                       | *Optional* override in case of a proxy, default is https://monitoringapi.solaredge.com
 | `livaDataUrl`                     | *Optional* override in case of a proxy, default is https://monitoring.solaredge.com
-| `updateIntervalBasicData`         | *Optional* Update interval** for the basic data like overview or details, default is 15 minutes
+| `updateIntervalBasicData`         | *Optional* Update interval** for the basic data like overview or details, default is 15 minutes*
 | `showOverview`                    | *Optional* Enables/disables the long term data view
+| `units`                           | *Optional* The decimal symbol that will be used to display numbers. Possible values are metric or imperial. Default is *units* from parent config.
 | `mockData`                        | *Optional* If you like to change something without using the real API, default is false
 ** be aware that with custom params you could reach the daily request limit of the SolarEdge API gateway.
 

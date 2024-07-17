@@ -19,6 +19,7 @@ Module.register("MMM-SolarEdge", {
     portalUrl: "https://monitoringapi.solaredge.com",
     liveDataUrl: "https://monitoring.solaredge.com",
     showOverview: true,
+    units: config.units,
     moduleRelativePath: "modules/MMM-SolarEdge", //workaround for nunjucks image location
     primes: [
       499, 997, 1499, 1997, 2503, 2999, 3499, 4001, 4493, 4999, 5501, 6007,
@@ -27,6 +28,8 @@ Module.register("MMM-SolarEdge", {
     mockData: false //for development purposes only!
   },
 
+  validUnits: ["imperial", "metric", ""],
+    
   requiresVersion: "2.1.0", // Required version of MagicMirror
 
   start: function () {
@@ -42,6 +45,11 @@ Module.register("MMM-SolarEdge", {
       self.getCurrentPowerData();
       self.updateDom();
     }, this.config.updateInterval);
+
+    //sanitize units parameter
+    if (this.validUnits.indexOf(this.config.units) == -1) {
+      this.config.units = "metric";
+    }
 
     if (this.config.showOverview) {
       setTimeout(
@@ -91,6 +99,14 @@ Module.register("MMM-SolarEdge", {
     );
   },
 
+  getUnitAdjustedValue: function (value) {
+    if (this.config.units == "metric") {
+      return value.toFixed(2).replace(".", "," );
+    } else {
+      return value.toFixed(2);
+    }
+  },
+
   getArrowConnections: function (connections) {
     return connections.map(
       (connection) =>
@@ -113,9 +129,7 @@ Module.register("MMM-SolarEdge", {
           ", " +
           this.dataNotificationDetails.details.location.city +
           " - " +
-          this.dataNotificationDetails.details.peakPower
-            .toFixed(2)
-            .replace(".", ",") +
+          this.getUnitAdjustedValue(this.dataNotificationDetails.details.peakPower) +
           " KWP";
       } else {
         title = this.translate("TITLE");
@@ -216,7 +230,7 @@ Module.register("MMM-SolarEdge", {
     var storage;
     if (powerAndStatus.STORAGE !== undefined) {
       storage = {
-        power: powerAndStatus.STORAGE.currentPower.toFixed(2).replace(".", ","),
+        power: this.getUnitAdjustedValue(powerAndStatus.STORAGE.currentPower),
         status: powerAndStatus.STORAGE.status,
         chargeLevel: powerAndStatus.STORAGE.chargeLevel,
         chargeLevelVisual: {
@@ -232,16 +246,16 @@ Module.register("MMM-SolarEdge", {
     }
     return {
       pv: {
-        power: powerAndStatus.PV.currentPower.toFixed(2).replace(".", ","),
+        power: this.getUnitAdjustedValue(powerAndStatus.PV.currentPower),
         status: powerAndStatus.PV.status
       },
       storage,
       load: {
-        power: powerAndStatus.LOAD.currentPower.toFixed(2).replace(".", ","),
+        power: this.getUnitAdjustedValue(powerAndStatus.LOAD.currentPower),
         status: powerAndStatus.LOAD.status
       },
       grid: {
-        power: powerAndStatus.GRID.currentPower.toFixed(2).replace(".", ","),
+        power: this.getUnitAdjustedValue(powerAndStatus.GRID.currentPower),
         status: powerAndStatus.GRID.status
       },
       unit: powerAndStatus.unit
@@ -252,15 +266,9 @@ Module.register("MMM-SolarEdge", {
     if (this.dataNotificationOverview) {
       var lifeTime = this.dataNotificationOverview.overview;
       return {
-        today: (lifeTime.lastDayData.energy / 1000)
-          .toFixed(2)
-          .replace(".", ","),
-        this_month: (lifeTime.lastMonthData.energy / 1000)
-          .toFixed(2)
-          .replace(".", ","),
-        this_year: (lifeTime.lastYearData.energy / 1000)
-          .toFixed(2)
-          .replace(".", ",")
+        today: this.getUnitAdjustedValue(lifeTime.lastDayData.energy / 1000),
+        this_month: this.getUnitAdjustedValue(lifeTime.lastMonthData.energy / 1000),
+        this_year: this.getUnitAdjustedValue(lifeTime.lastYearData.energy / 1000)
       };
     }
   },
