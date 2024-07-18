@@ -21,7 +21,7 @@ Module.register("MMM-SolarEdge", {
     showOverview: true,
     showDayEnergy: true,
     compactMode: false,
-    units: config.units,
+    decimal: "comma",
     moduleRelativePath: "modules/MMM-SolarEdge", //workaround for nunjucks image location
     primes: [
       499, 997, 1499, 1997, 2503, 2999, 3499, 4001, 4493, 4999, 5501, 6007,
@@ -30,7 +30,7 @@ Module.register("MMM-SolarEdge", {
     mockData: false //for development purposes only!
   },
 
-  validUnits: ["imperial", "metric", ""],
+  validDecimal: ["comma", "period"],
     
   requiresVersion: "2.1.0", // Required version of MagicMirror
 
@@ -48,9 +48,9 @@ Module.register("MMM-SolarEdge", {
       self.updateDom();
     }, this.config.updateInterval);
 
-    //sanitize units parameter
-    if (this.validUnits.indexOf(this.config.units) == -1) {
-      this.config.units = "metric";
+    //sanitize deci parammaleter
+    if (this.validDecimal.indexOf(this.config.decimal) == -1) {
+      this.config.decimal = "comma";
     }
 
     if (this.config.showOverview) {
@@ -123,8 +123,8 @@ Module.register("MMM-SolarEdge", {
     );
   },
 
-  getUnitAdjustedValue: function (value) {
-    if (this.config.units == "metric") {
+  getDecimalAdjustedValue: function (value) {
+    if (this.config.decimal == "comma") {
       return value.toFixed(2).replace(".", "," );
     } else {
       return value.toFixed(2);
@@ -153,7 +153,7 @@ Module.register("MMM-SolarEdge", {
           ", " +
           this.dataNotificationDetails.details.location.city +
           " - " +
-          this.getUnitAdjustedValue(this.dataNotificationDetails.details.peakPower) +
+          this.getDecimalAdjustedValue(this.dataNotificationDetails.details.peakPower) +
           " KWP";
       } else {
         title = this.translate("TITLE");
@@ -249,7 +249,7 @@ Module.register("MMM-SolarEdge", {
     var storage;
     if (powerAndStatus.STORAGE !== undefined) {
       storage = {
-        power: this.getUnitAdjustedValue(powerAndStatus.STORAGE.currentPower),
+        power: this.getDecimalAdjustedValue(powerAndStatus.STORAGE.currentPower),
         status: powerAndStatus.STORAGE.status,
         chargeLevel: powerAndStatus.STORAGE.chargeLevel,
         chargeLevelVisual: {
@@ -265,16 +265,16 @@ Module.register("MMM-SolarEdge", {
     }
     return {
       pv: {
-        power: this.getUnitAdjustedValue(powerAndStatus.PV.currentPower),
+        power: this.getDecimalAdjustedValue(powerAndStatus.PV.currentPower),
         status: powerAndStatus.PV.status
       },
       storage,
       load: {
-        power: this.getUnitAdjustedValue(powerAndStatus.LOAD.currentPower),
+        power: this.getDecimalAdjustedValue(powerAndStatus.LOAD.currentPower),
         status: powerAndStatus.LOAD.status
       },
       grid: {
-        power: this.getUnitAdjustedValue(powerAndStatus.GRID.currentPower),
+        power: this.getDecimalAdjustedValue(powerAndStatus.GRID.currentPower),
         status: powerAndStatus.GRID.status
       },
       unit: powerAndStatus.unit
@@ -285,9 +285,9 @@ Module.register("MMM-SolarEdge", {
     if (this.dataNotificationOverview) {
       var lifeTime = this.dataNotificationOverview.overview;
       return {
-        today: this.getUnitAdjustedValue(lifeTime.lastDayData.energy / 1000),
-        this_month: this.getUnitAdjustedValue(lifeTime.lastMonthData.energy / 1000),
-        this_year: this.getUnitAdjustedValue(lifeTime.lastYearData.energy / 1000)
+        today: this.getDecimalAdjustedValue(lifeTime.lastDayData.energy / 1000),
+        this_month: this.getDecimalAdjustedValue(lifeTime.lastMonthData.energy / 1000),
+        this_year: this.getDecimalAdjustedValue(lifeTime.lastYearData.energy / 1000)
       };
     }
   },
@@ -296,11 +296,11 @@ Module.register("MMM-SolarEdge", {
     if (this.dataNotificationDayEnergy) {
       var energyDetails = this.dataNotificationDayEnergy.energyDetails;
       return {
-        production: this.getUnitAdjustedValue(energyDetails.meters.find(e => e.type === 'Production').values[0].value / 1000),
-        consumption: this.getUnitAdjustedValue(energyDetails.meters.find(e => e.type === 'Consumption').values[0].value / 1000),
-        feedIn: this.getUnitAdjustedValue(energyDetails.meters.find(e => e.type === 'FeedIn').values[0].value / 1000),
-        purchased: this.getUnitAdjustedValue(energyDetails.meters.find(e => e.type === 'Purchased').values[0].value / 1000),
-        selfConsumption: this.getUnitAdjustedValue(energyDetails.meters.find(e => e.type === 'SelfConsumption').values[0].value / 1000),
+        production: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'Production').values[0].value / 1000),
+        consumption: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'Consumption').values[0].value / 1000),
+        feedIn: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'FeedIn').values[0].value / 1000),
+        purchased: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'Purchased').values[0].value / 1000),
+        selfConsumption: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'SelfConsumption').values[0].value / 1000),
       };
     }
   },
