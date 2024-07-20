@@ -62,3 +62,5 @@ var config = {
 ![alt text](/docs/SolarEdgePvBattery.png "Example")
 
 ![alt text](/docs/SolarEdgePvCompactMode.png "Example")
+
+![alt text](/docs/SolarEdgePvBatteryCompactMode.png "Example")
