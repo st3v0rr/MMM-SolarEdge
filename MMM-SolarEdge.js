@@ -19,6 +19,9 @@ Module.register("MMM-SolarEdge", {
     portalUrl: "https://monitoringapi.solaredge.com",
     liveDataUrl: "https://monitoring.solaredge.com",
     showOverview: true,
+    showDayEnergy: true,
+    compactMode: false,
+    decimal: "comma",
     moduleRelativePath: "modules/MMM-SolarEdge", //workaround for nunjucks image location
     primes: [
       499, 997, 1499, 1997, 2503, 2999, 3499, 4001, 4493, 4999, 5501, 6007,
@@ -27,6 +30,8 @@ Module.register("MMM-SolarEdge", {
     mockData: false //for development purposes only!
   },
 
+  validDecimal: ["comma", "period"],
+    
   requiresVersion: "2.1.0", // Required version of MagicMirror
 
   start: function () {
@@ -43,6 +48,11 @@ Module.register("MMM-SolarEdge", {
       self.updateDom();
     }, this.config.updateInterval);
 
+    //sanitize deci parammaleter
+    if (this.validDecimal.indexOf(this.config.decimal) == -1) {
+      this.config.decimal = "comma";
+    }
+
     if (this.config.showOverview) {
       setTimeout(
         () => self.getOverviewData(),
@@ -51,6 +61,19 @@ Module.register("MMM-SolarEdge", {
 
       setInterval(function () {
         self.getOverviewData();
+        self.updateDom();
+      }, this.config.updateIntervalBasicData +
+        this.config.primes.sort(() => Math.random() - 0.5)[0]);
+    }
+
+    if (this.config.showDayEnergy) {
+      setTimeout(
+        () => self.getDayEnergyData(),
+        this.config.primes.sort(() => Math.random() - 0.5)[0]
+      );
+
+      setInterval(function () {
+        self.getDayEnergyData();
         self.updateDom();
       }, this.config.updateIntervalBasicData +
         this.config.primes.sort(() => Math.random() - 0.5)[0]);
@@ -91,6 +114,23 @@ Module.register("MMM-SolarEdge", {
     );
   },
 
+  getDayEnergyData: function () {
+    this.sendSocketNotification(
+      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DAY_ENERGY_DATA_REQUESTED",
+      {
+        config: this.config
+      }
+    );
+  },
+
+  getDecimalAdjustedValue: function (value) {
+    if (this.config.decimal == "comma") {
+      return value.toFixed(2).replace(".", "," );
+    } else {
+      return value.toFixed(2);
+    }
+  },
+
   getArrowConnections: function (connections) {
     return connections.map(
       (connection) =>
@@ -113,9 +153,7 @@ Module.register("MMM-SolarEdge", {
           ", " +
           this.dataNotificationDetails.details.location.city +
           " - " +
-          this.dataNotificationDetails.details.peakPower
-            .toFixed(2)
-            .replace(".", ",") +
+          this.getDecimalAdjustedValue(this.dataNotificationDetails.details.peakPower) +
           " KWP";
       } else {
         title = this.translate("TITLE");
@@ -164,15 +202,10 @@ Module.register("MMM-SolarEdge", {
     if (this.dataNotificationCurrentPower !== undefined) {
       return {
         config: this.config,
-        translations: {
-          today: this.translate("TODAY"),
-          this_month: this.translate("THIS_MONTH"),
-          this_year: this.translate("THIS_YEAR"),
-          stand_by: this.translate("STAND_BY")
-        },
         arrowDirections: this.mapArrowDirections(),
         powerAndStatus: this.mapCurrentPowerAndStatus(),
-        lifeTimeData: this.mapLifeTime()
+        lifeTimeData: this.mapLifeTime(),
+        dayEnergyData: this.mapDayEnergy()
       };
     }
 
@@ -216,7 +249,7 @@ Module.register("MMM-SolarEdge", {
     var storage;
     if (powerAndStatus.STORAGE !== undefined) {
       storage = {
-        power: powerAndStatus.STORAGE.currentPower.toFixed(2).replace(".", ","),
+        power: this.getDecimalAdjustedValue(powerAndStatus.STORAGE.currentPower),
         status: powerAndStatus.STORAGE.status,
         chargeLevel: powerAndStatus.STORAGE.chargeLevel,
         chargeLevelVisual: {
@@ -232,16 +265,16 @@ Module.register("MMM-SolarEdge", {
     }
     return {
       pv: {
-        power: powerAndStatus.PV.currentPower.toFixed(2).replace(".", ","),
+        power: this.getDecimalAdjustedValue(powerAndStatus.PV.currentPower),
         status: powerAndStatus.PV.status
       },
       storage,
       load: {
-        power: powerAndStatus.LOAD.currentPower.toFixed(2).replace(".", ","),
+        power: this.getDecimalAdjustedValue(powerAndStatus.LOAD.currentPower),
         status: powerAndStatus.LOAD.status
       },
       grid: {
-        power: powerAndStatus.GRID.currentPower.toFixed(2).replace(".", ","),
+        power: this.getDecimalAdjustedValue(powerAndStatus.GRID.currentPower),
         status: powerAndStatus.GRID.status
       },
       unit: powerAndStatus.unit
@@ -252,15 +285,22 @@ Module.register("MMM-SolarEdge", {
     if (this.dataNotificationOverview) {
       var lifeTime = this.dataNotificationOverview.overview;
       return {
-        today: (lifeTime.lastDayData.energy / 1000)
-          .toFixed(2)
-          .replace(".", ","),
-        this_month: (lifeTime.lastMonthData.energy / 1000)
-          .toFixed(2)
-          .replace(".", ","),
-        this_year: (lifeTime.lastYearData.energy / 1000)
-          .toFixed(2)
-          .replace(".", ",")
+        today: this.getDecimalAdjustedValue(lifeTime.lastDayData.energy / 1000),
+        this_month: this.getDecimalAdjustedValue(lifeTime.lastMonthData.energy / 1000),
+        this_year: this.getDecimalAdjustedValue(lifeTime.lastYearData.energy / 1000)
+      };
+    }
+  },
+
+  mapDayEnergy: function () {
+    if (this.dataNotificationDayEnergy) {
+      var energyDetails = this.dataNotificationDayEnergy.energyDetails;
+      return {
+        production: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'Production').values[0].value / 1000),
+        consumption: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'Consumption').values[0].value / 1000),
+        feedIn: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'FeedIn').values[0].value / 1000),
+        purchased: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'Purchased').values[0].value / 1000),
+        selfConsumption: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'SelfConsumption').values[0].value / 1000),
       };
     }
   },
@@ -314,6 +354,15 @@ Module.register("MMM-SolarEdge", {
     ) {
       // set dataNotification
       this.dataNotificationOverview = payload;
+      this.updateDom();
+    }
+
+    if (
+      notification ===
+      "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DAY_ENERGY_DATA_RECEIVED"
+    ) {
+      // set dataNotification
+      this.dataNotificationDayEnergy = payload;
       this.updateDom();
     }
   }

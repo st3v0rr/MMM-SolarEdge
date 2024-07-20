@@ -1,0 +1,110 @@
+<div class="solaredge-container {{ 'solaredge-compact' if config.compactMode }}">
+
+  {% block pv_installation %}
+    <!-- PV installation graph -->
+  {% endblock %}
+
+  {% if dayEnergyData %}
+    {% if config.compactMode %}
+        <div class="solaredge-row solaredge-border-bottom">
+          <div class="solaredge-col solaredge-align-self-center xsmall">
+            <div class="solaredge-container">
+              <div class="solaredge-row">
+                <div class="solaredge-col solaredge-text-align-left time light">{{ "PRODUCTION" | translate }}</div>
+                <div class="solaredge-col solaredge-text-align-right title bright">{{ dayEnergyData.production }} kWh</div>
+                <div class="solaredge-col"></div>
+                <div class="solaredge-col solaredge-text-align-left time light">{{ "CONSUMPTION" | translate }}</div>
+                <div class="solaredge-col solaredge-text-align-right title bright">{{ dayEnergyData.consumption }} kWh</div>
+              </div>
+              <div class="solaredge-row">
+                <div class="solaredge-col solaredge-text-align-left time light">{{ "FEED_IN" | translate }}</div>
+                <div class="solaredge-col solaredge-text-align-right title bright">{{ dayEnergyData.feedIn }} kWh</div>
+                <div class="solaredge-col"></div>      
+                <div class="solaredge-col solaredge-text-align-left time light">{{ "PURCHASED" | translate }}</div>
+                <div class="solaredge-col solaredge-text-align-right title bright">{{ dayEnergyData.purchased }} kWh</div>
+              </div>        
+              <div class="solaredge-row">
+                <div class="solaredge-col solaredge-text-align-left time light">{{ "SELF_CONSUMPTION" | translate }}</div>
+                <div class="solaredge-col solaredge-text-align-right title bright">{{ dayEnergyData.selfConsumption }} kWh</div>
+                <div class="solaredge-col"></div>
+                <div class="solaredge-col"></div>
+                <div class="solaredge-col"></div>
+              </div>
+            </div>
+          </div>
+      </div>
+    {% else %}
+      <div class="solaredge-row solaredge-border-bottom">
+        <div class="solaredge-col solaredge-align-self-center">
+          <div class="solaredge-container">
+            <div class="solaredge-row">
+              <div class="solaredge-col solaredge-text-align-left time light">{{ "PRODUCTION" | translate }}</div>
+              <div class="solaredge-col solaredge-text-align-right title bright">{{ dayEnergyData.production }} kWh</div>
+            </div>
+            <div class="solaredge-row">
+              <div class="solaredge-col solaredge-text-align-left time light">{{ "CONSUMPTION" | translate }}</div>
+              <div class="solaredge-col solaredge-text-align-right title bright">{{ dayEnergyData.consumption }} kWh</div>
+            </div>
+            <div class="solaredge-row">
+              <div class="solaredge-col solaredge-text-align-left time light">{{ "PURCHASED" | translate }}</div>
+              <div class="solaredge-col solaredge-text-align-right title bright">{{ dayEnergyData.purchased }} kWh</div>
+            </div>
+            <div class="solaredge-row">
+              <div class="solaredge-col solaredge-text-align-left time light">{{ "FEED_IN" | translate }}</div>
+              <div class="solaredge-col solaredge-text-align-right title bright">{{ dayEnergyData.feedIn }} kWh</div>
+            </div>        
+            <div class="solaredge-row">
+              <div class="solaredge-col solaredge-text-align-left time light">{{ "SELF_CONSUMPTION" | translate }}</div>
+              <div class="solaredge-col solaredge-text-align-right title bright">{{ dayEnergyData.selfConsumption }} kWh</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {% if lifeTimeData %}
+    {% if config.compactMode %}
+      <div class="solaredge-row solaredge-border-bottom xsmall">
+        <div class="solaredge-col solaredge-align-self-center">
+          <div class="solaredge-container">
+            <div class="solaredge-row">
+              <div class="solaredge-col solaredge-text-align-left time light">{{ "TODAY" | translate }}</div>
+              <div class="solaredge-col solaredge-text-align-right title bright">{{ lifeTimeData.today }} kWh</div>
+              <div class="solaredge-col"></div>
+              <div class="solaredge-col solaredge-text-align-left time light">{{ "THIS_MONTH" | translate }}</div>
+              <div class="solaredge-col solaredge-text-align-right title bright">{{ lifeTimeData.this_month }} kWh</div>
+            </div>
+            <div class="solaredge-row">
+              <div class="solaredge-col solaredge-text-align-left time light">{{ "THIS_YEAR" | translate }}</div>
+              <div class="solaredge-col solaredge-text-align-right title bright">{{ lifeTimeData.this_year }} kWh</div>
+              <div class="solaredge-col"></div>
+              <div class="solaredge-col"></div>
+              <div class="solaredge-col"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="solaredge-row solaredge-border-bottom">
+        <div class="solaredge-col solaredge-align-self-center">
+          <div class="solaredge-container">
+            <div class="solaredge-row">
+              <div class="solaredge-col solaredge-text-align-left time light">{{ "TODAY" | translate }}</div>
+              <div class="solaredge-col solaredge-text-align-right title bright">{{ lifeTimeData.today }} kWh</div>
+            </div>
+            <div class="solaredge-row">
+              <div class="solaredge-col solaredge-text-align-left time light">{{ "THIS_MONTH" | translate }}</div>
+              <div class="solaredge-col solaredge-text-align-right title bright">{{ lifeTimeData.this_month }} kWh</div>
+            </div>
+            <div class="solaredge-row">
+              <div class="solaredge-col solaredge-text-align-left time light">{{ "THIS_YEAR" | translate }}</div>
+              <div class="solaredge-col solaredge-text-align-right title bright">{{ lifeTimeData.this_year }} kWh</div>
+            </div>
+          </div>
+        </div>  
+      </div> 
+    {% endif %}
+  {% endif %}
+
+</div>
