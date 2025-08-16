@@ -48,8 +48,9 @@ var config = {
 | `userPassword`                    | *Required* SolarEdge Monitoring Portal Password
 | `portalUrl`                       | *Optional* override in case of a proxy, default is https://monitoringapi.solaredge.com
 | `livaDataUrl`                     | *Optional* override in case of a proxy, default is https://monitoring.solaredge.com
-| `updateIntervalBasicData`         | *Optional* Update interval** for the basic data like overview or details, default is 15 minutes
+| `updateIntervalBasicData`         | *Optional* Update interval for the basic data like overview or details, default is 15 minutes
 | `showOverview`                    | *Optional* Enables/disables the long term data view, default is true
+| `decimal`                         | *Optional* The decimal symbol that will be used to display numbers. Possible values are "comma" or "period". Default is *comma*.
 | `showDayEnergy`                   | *Optional* Enables/disables the day energy data view, default is true
 | `compactMode`                     | *Optional* Enables/disables compact mode display, default is false
 | `mockData`                        | *Optional* If you like to change something without using the real API, default is false
@@ -61,3 +62,5 @@ var config = {
 ![alt text](/docs/SolarEdgePvBattery.png "Example")
 
 ![alt text](/docs/SolarEdgePvCompactMode.png "Example")
+
+![alt text](/docs/SolarEdgePvBatteryCompactMode.png "Example")

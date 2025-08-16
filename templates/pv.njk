@@ -6,7 +6,11 @@
         <div class="solaredge-container">
           <div class="solaredge-row">
             <div class="solaredge-col solaredge-align-self-center">
-                <div><img src="{{ config.moduleRelativePath }}/images/pv.svg"></div>
+                {% if config.compactMode %}
+                  <div class="solaredge-compact-image"><img src="{{ config.moduleRelativePath }}/images/pv.svg"></div>
+                {% else %}
+                  <div><img src="{{ config.moduleRelativePath }}/images/pv.svg"></div>
+                {% endif %}
                 {% if powerAndStatus.pv.status != "Idle" %}
                   <div class="small bright">{{ powerAndStatus.pv.power }} {{ powerAndStatus.unit }}</div>
                 {% endif %}
@@ -23,7 +27,11 @@
         </div>
       </div>
       <div class="solaredge-col solaredge-mid solaredge-align-self-center">
-        <div><img src="{{ config.moduleRelativePath }}/images/home.svg"></div>
+        {% if config.compactMode %}
+          <div class="solaredge-compact-image"><img src="{{ config.moduleRelativePath }}/images/home.svg"></div>
+        {% else %}
+          <div><img src="{{ config.moduleRelativePath }}/images/home.svg"></div>
+        {% endif %}
         <div class="small bright">{{ powerAndStatus.load.power }} {{ powerAndStatus.unit }}</div>
       </div>
       <div class="solaredge-col solaredge-align-self-center">
@@ -35,7 +43,11 @@
               {% endif %}
             </div>
             <div class="solaredge-col solaredge-align-self-center">
-              <div><img src="{{ config.moduleRelativePath }}/images/grid.svg"></div>
+              {% if config.compactMode %}
+                <div class="solaredge-compact-image"><img src="{{ config.moduleRelativePath }}/images/grid.svg"></div>
+              {% else %}
+                <div><img src="{{ config.moduleRelativePath }}/images/grid.svg"></div>
+              {% endif %}
               <div class="small bright">{{ powerAndStatus.grid.power }} {{ powerAndStatus.unit }}</div>
             </div>
           </div>

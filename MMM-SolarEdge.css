@@ -44,15 +44,29 @@
   top: 30px;
 }
 
+.solaredge-batterylevel-relative {
+  position: relative;
+  bottom: 15px;
+}
+
 .solaredge-compact {
-  margin-top: -10px;
+  margin-top: -12px;
+}
+
+.solaredge-compact-image {
+  margin-top: -12px;
+  margin-bottom: -12px;
 }
 
 .solaredge-compact .solaredge-mid {
-  max-width: 26.8%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  top: 0;
+  left: 0;
 }
 
 .solaredge-compact img {
-  width: 50%;
-  height: 50%;
+  width: 60%;
+  height: 60%;
 }
