@@ -1,8 +1,76 @@
 .solaredge-container {
-  width: 100%;
   max-width: 500px;
+  min-width: 500px;
   margin-right: auto;
   margin-left: auto;
+}
+
+.solaredge-parent-pv-battery {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 40px);;
+  align-items: center;
+  justify-content: center;
+  row-gap: 10px;
+}
+
+.solaredge-parent-pv-only {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 20px);
+  align-items: center;
+  justify-content: center;
+  row-gap: 10px;
+}
+
+.div-pv-status {
+  grid-row: span 2 / span 2;
+}
+
+.div-pv-only-status {
+  grid-row: span 4 / span 4;
+}
+
+.div-battery-status {
+  grid-row: span 2 / span 2;
+  grid-column-start: 1;
+  grid-row-start: 3;
+}
+
+.div-home {
+  grid-row: span 4 / span 4;
+  grid-column-start: 3;
+  grid-row-start: 1;
+}
+
+.div-grid-status {
+  grid-row: span 4 / span 4;
+  grid-column-start: 5;
+  grid-row-start: 1;
+}
+
+.div-pv-arrow {
+  grid-row: span 2 / span 2;
+  grid-column-start: 2;
+  grid-row-start: 1;
+}
+
+.div-pv-only-arrow {
+  grid-row: span 4 / span 4;
+  grid-column-start: 2;
+  grid-row-start: 1;
+}
+
+.div-battery-arrow {
+  grid-row: span 2 / span 2;
+  grid-column-start: 2;
+  grid-row-start: 3;
+}
+
+.div-grid-arrow {
+  grid-row: span 4 / span 4;
+  grid-column-start: 4;
+  grid-row-start: 1;
 }
 
 .solaredge-row {
@@ -12,10 +80,6 @@
 
 .solaredge-col {
   flex: 1 0 0;
-}
-
-.solaredge-mid {
-  max-width: 30%;
 }
 
 .solaredge-align-self-center {
@@ -39,9 +103,14 @@
   text-align: right;
 }
 
+.solaredge-pv-relative {
+  position: relative;
+  top: 20px;
+}
+
 .solaredge-chargelevel-relative {
   position: relative;
-  top: 30px;
+  top: 35px;
 }
 
 .solaredge-batterylevel-relative {
@@ -49,24 +118,7 @@
   bottom: 15px;
 }
 
-.solaredge-compact {
-  margin-top: -12px;
-}
-
-.solaredge-compact-image {
-  margin-top: -12px;
-  margin-bottom: -12px;
-}
-
-.solaredge-compact .solaredge-mid {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  top: 0;
-  left: 0;
-}
-
-.solaredge-compact img {
-  width: 60%;
-  height: 60%;
+.solaredge-image {
+  width: 96px;
+  height: 96px;
 }

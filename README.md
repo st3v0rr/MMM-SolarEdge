@@ -52,7 +52,6 @@ var config = {
 | `showOverview`                    | *Optional* Enables/disables the long term data view, default is true
 | `decimal`                         | *Optional* The decimal symbol that will be used to display numbers. Possible values are "comma" or "period". Default is *comma*.
 | `showDayEnergy`                   | *Optional* Enables/disables the day energy data view, default is true
-| `compactMode`                     | *Optional* Enables/disables compact mode display, default is false
 | `mockData`                        | *Optional* If you like to change something without using the real API, default is false
 ** be aware that with custom params you could reach the daily request limit of the SolarEdge API gateway.
 
@@ -60,7 +59,3 @@ var config = {
 ![alt text](/docs/SolarEdgePv.png "Example")
 
 ![alt text](/docs/SolarEdgePvBattery.png "Example")
-
-![alt text](/docs/SolarEdgePvCompactMode.png "Example")
-
-![alt text](/docs/SolarEdgePvBatteryCompactMode.png "Example")

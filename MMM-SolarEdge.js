@@ -20,7 +20,6 @@ Module.register("MMM-SolarEdge", {
     liveDataUrl: "https://monitoring.solaredge.com",
     showOverview: true,
     showDayEnergy: true,
-    compactMode: false,
     decimal: "comma",
     moduleRelativePath: "modules/MMM-SolarEdge", //workaround for nunjucks image location
     primes: [
@@ -31,7 +30,7 @@ Module.register("MMM-SolarEdge", {
   },
 
   validDecimal: ["comma", "period"],
-    
+
   requiresVersion: "2.1.0", // Required version of MagicMirror
 
   start: function () {
