@@ -7,19 +7,11 @@
 	"license": "MIT",
 	"devDependencies": {
 		"babel-eslint": "^10.1.0",
-		"eslint": "^7.32.0",
-		"eslint-config-prettier": "^8.3.0",
-		"eslint-plugin-prettier": "^3.4.1",
-		"grunt": "latest",
-		"grunt-eslint": "latest",
-		"grunt-jsonlint": "latest",
-		"grunt-markdownlint": "^1.0.13",
-		"grunt-stylelint": "latest",
-		"grunt-yamllint": "latest",
-		"prettier": "^2.3.2",
-		"prettier-eslint": "^13.0.0",
-		"prettier-eslint-cli": "^5.0.1",
-		"stylelint-config-standard": "latest",
-		"time-grunt": "latest"
+		"eslint": "^9.39.2",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-prettier": "^5.5.4",
+		"prettier": "^3.7.4",
+		"prettier-eslint": "^16.4.2",
+		"prettier-eslint-cli": "^8.0.1"
 	}
 }
