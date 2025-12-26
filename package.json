@@ -1,7 +1,7 @@
 {
 	"name": "MMM-SolarEdge",
 	"version": "1.0.0",
-	"description": "Todo: Insert description here!",
+	"description": "MagicMirror module for displaying SolarEdge inverter and energy data.",
 	"main": "MMM-SolarEdge.js",
 	"repository": {
 		"type": "git",
