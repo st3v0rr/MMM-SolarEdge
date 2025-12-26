@@ -1,4 +1,4 @@
-/* Magic Mirror
+/* MagicMirror²
  * Node Helper: MMM-SolarEdge
  *
  * By Stefan Nachtrab
@@ -6,8 +6,8 @@
  */
 
 var NodeHelper = require("node_helper");
-var https = require("https");
-var http = require("http");
+var https = require("node:https");
+var http = require("node:http");
 var fs = require("fs");
 
 module.exports = NodeHelper.create({

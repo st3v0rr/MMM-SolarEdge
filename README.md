@@ -1,8 +1,8 @@
 # MMM-SolarEdge
 
-This is a module for the [MagicMirror²](https://github.com/MichMich/MagicMirror/).
+This is a module for the [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror/).
 
-A Module for MagicMirror2 designed to integrate with a SolarEdge System. Dependent on your configuration it can display several statistics.
+A Module for MagicMirror² designed to integrate with a SolarEdge System. Dependent on your configuration it can display several statistics.
 
 - Current Power (dependent on yout module update interval)
 - more will follow...
@@ -17,24 +17,28 @@ npm i
 ```
 Wait until npm has finished.
 
+## Update
+
+```bash
+cd ~/MagicMirror/modules/MMM-SolarEdge
+git pull
+npm install
+```
+
 ## Using the module
 
-To use this module, add the following configuration block to the modules array in the `config/config.js` file:
+To use this module, add the following configuration block to the `config/config.js` file:
 
 ```js
-var config = {
-    modules: [
-        {
-            module: 'MMM-SolarEdge',
-            position: 'lower_third',
-            config: {
-                apiKey: "################################", //Requires your own API Key
-                siteId: "12345", //SolarEdge site ID
-                userName: "youruser", //SolarEdge Monitoring Portal User
-                userPassword: "yourpw", //SolarEdge Monitoring Portal Password
-            }
-        },
-    ]
+{
+    module: 'MMM-SolarEdge',
+    position: 'lower_third',
+    config: {
+        apiKey: "################################", //Requires your own API Key
+        siteId: "12345", //SolarEdge site ID
+        userName: "youruser", //SolarEdge Monitoring Portal User
+        userPassword: "yourpw", //SolarEdge Monitoring Portal Password
+    }
 }
 ```
 

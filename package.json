@@ -3,6 +3,18 @@
 	"version": "1.0.0",
 	"description": "Todo: Insert description here!",
 	"main": "MMM-SolarEdge.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/st3v0rr/MMM-SolarEdge.git"
+	},
+	"keywords": [
+		"magicmirror",
+		"magicmirror-module",
+		"solaredge",
+		"solar",
+		"energy",
+		"dashboard"
+	],
 	"author": "Stefan Nachtrab",
 	"license": "MIT",
 	"devDependencies": {
