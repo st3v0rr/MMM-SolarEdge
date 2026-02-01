@@ -22,7 +22,7 @@
 		"eslint": "^9.39.2",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-prettier": "^5.5.4",
-		"prettier": "^3.7.4",
+		"prettier": "^3.8.1",
 		"prettier-eslint": "^16.4.2",
 		"prettier-eslint-cli": "^8.0.1"
 	}
