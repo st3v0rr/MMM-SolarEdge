@@ -37,7 +37,7 @@ To use this module, add the following configuration block to the `config/config.
         apiKey: "################################", //Requires your own API Key
         siteId: "12345", //SolarEdge site ID
         userName: "youruser", //SolarEdge Monitoring Portal User
-        userPassword: "yourpw", //SolarEdge Monitoring Portal Password
+        userPassword: "yourpw" //SolarEdge Monitoring Portal Password
     }
 }
 ```

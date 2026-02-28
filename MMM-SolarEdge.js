@@ -1,4 +1,4 @@
-/* global Module */
+/* global Module, setTimeout */
 
 /* MagicMirror²
  * Module: MMM-SolarEdge
@@ -48,7 +48,7 @@ Module.register("MMM-SolarEdge", {
     }, this.config.updateInterval);
 
     //sanitize deci parammaleter
-    if (this.validDecimal.indexOf(this.config.decimal) == -1) {
+    if (this.validDecimal.indexOf(this.config.decimal) === -1) {
       this.config.decimal = "comma";
     }
 
@@ -123,7 +123,7 @@ Module.register("MMM-SolarEdge", {
   },
 
   getDecimalAdjustedValue: function (value) {
-    if (this.config.decimal == "comma") {
+    if (this.config.decimal === "comma") {
       return value.toFixed(2).replace(".", "," );
     } else {
       return value.toFixed(2);

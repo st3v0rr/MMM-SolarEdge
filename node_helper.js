@@ -1,3 +1,4 @@
+/* global __dirname, Buffer */
 /* MagicMirror²
  * Node Helper: MMM-SolarEdge
  *
@@ -6,8 +7,6 @@
  */
 
 var NodeHelper = require("node_helper");
-var https = require("node:https");
-var http = require("node:http");
 var fs = require("fs");
 
 module.exports = NodeHelper.create({
@@ -17,7 +16,7 @@ module.exports = NodeHelper.create({
    * argument notification string - The identifier of the noitication.
    * argument payload mixed - The payload of the notification.
    */
-  socketNotificationReceived: function (notification, payload) {
+  socketNotificationReceived: async function (notification, payload) {
     var self = this;
 
     if (
@@ -25,7 +24,7 @@ module.exports = NodeHelper.create({
       "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_CURRENTPOWER_DATA_REQUESTED"
     ) {
       if (payload.config.mockData) {
-        var currentPowerFlow = fs.readFileSync(
+        const currentPowerFlow = fs.readFileSync(
           __dirname + "/mock/currentPowerFlowPvBattery.json"
         );
         self.sendSocketNotification(
@@ -33,34 +32,28 @@ module.exports = NodeHelper.create({
           JSON.parse(currentPowerFlow)
         );
       } else {
-        var liveDataClient = payload.config.liveDataUrl.startsWith("https")
-          ? https
-          : http;
-        var currentPowerUrl =
+        const currentPowerUrl =
           payload.config.liveDataUrl +
           "/solaredge-apigw/api/site/" +
           payload.config.siteId +
           "/currentPowerFlow.json";
-        var auth =
+        const auth =
           "Basic " +
           Buffer.from(
             payload.config.userName + ":" + payload.config.userPassword
           ).toString("base64");
-        var options = {
+        const options = {
           headers: { Authorization: auth }
         };
-        liveDataClient
-          .get(currentPowerUrl, options, (res) => {
-            res.on("data", (d) => {
-              self.sendSocketNotification(
-                "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_CURRENTPOWER_DATA_RECEIVED",
-                JSON.parse(d)
-              );
-            });
-          })
-          .on("error", (e) => {
-            console.error(e);
-          });
+        try {
+          const currentPower = await self.fetchJson(currentPowerUrl, options);
+          self.sendSocketNotification(
+            "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_CURRENTPOWER_DATA_RECEIVED",
+            currentPower
+          );
+        } catch (e) {
+          console.error(e);
+        }
       }
     }
 
@@ -69,15 +62,12 @@ module.exports = NodeHelper.create({
       "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DETAILS_DATA_REQUESTED"
     ) {
       if (payload.config.mockData) {
-        var details = fs.readFileSync(__dirname + "/mock/details.json");
+        const details = fs.readFileSync(__dirname + "/mock/details.json");
         self.sendSocketNotification(
           "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DETAILS_DATA_RECEIVED",
           JSON.parse(details)
         );
       } else {
-        var portalDataClient = payload.config.liveDataUrl.startsWith("https")
-          ? https
-          : http;
         let detailsUrl =
           payload.config.portalUrl +
           "/site/" +
@@ -85,18 +75,15 @@ module.exports = NodeHelper.create({
           "/details?api_key=" +
           payload.config.apiKey;
 
-        portalDataClient
-          .get(detailsUrl, (res) => {
-            res.on("data", (d) => {
-              self.sendSocketNotification(
-                "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DETAILS_DATA_RECEIVED",
-                JSON.parse(d)
-              );
-            });
-          })
-          .on("error", (e) => {
-            console.error(e);
-          });
+        try {
+          const details = await self.fetchJson(detailsUrl);
+          self.sendSocketNotification(
+            "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DETAILS_DATA_RECEIVED",
+            details
+          );
+        } catch (e) {
+          console.error(e);
+        }
       }
     }
 
@@ -105,33 +92,27 @@ module.exports = NodeHelper.create({
       "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_OVERVIEW_DATA_REQUESTED"
     ) {
       if (payload.config.mockData) {
-        var overview = fs.readFileSync(__dirname + "/mock/overview.json");
+        const overview = fs.readFileSync(__dirname + "/mock/overview.json");
         self.sendSocketNotification(
           "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_OVERVIEW_DATA_RECEIVED",
           JSON.parse(overview)
         );
       } else {
-        var portalDataClient = payload.config.liveDataUrl.startsWith("https")
-          ? https
-          : http;
         let overviewUrl =
           payload.config.portalUrl +
           "/site/" +
           payload.config.siteId +
           "/overview?api_key=" +
           payload.config.apiKey;
-        portalDataClient
-          .get(overviewUrl, (res) => {
-            res.on("data", (d) => {
-              self.sendSocketNotification(
-                "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_OVERVIEW_DATA_RECEIVED",
-                JSON.parse(d)
-              );
-            });
-          })
-          .on("error", (e) => {
-            console.error(e);
-          });
+        try {
+          const overview = await self.fetchJson(overviewUrl);
+          self.sendSocketNotification(
+            "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_OVERVIEW_DATA_RECEIVED",
+            overview
+          );
+        } catch (e) {
+          console.error(e);
+        }
       }
     }
 
@@ -140,15 +121,12 @@ module.exports = NodeHelper.create({
       "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DAY_ENERGY_DATA_REQUESTED"
     ) {
       if (payload.config.mockData) {
-        var overview = fs.readFileSync(__dirname + "/mock/dayEnergy.json");
+        const dayEnergy = fs.readFileSync(__dirname + "/mock/dayEnergy.json");
         self.sendSocketNotification(
           "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DAY_ENERGY_DATA_RECEIVED",
-          JSON.parse(overview)
+          JSON.parse(dayEnergy)
         );
       } else {
-        var portalDataClient = payload.config.liveDataUrl.startsWith("https")
-          ? https
-          : http;
         const todayStr = self.formatDate(new Date(), "YYYY-MM-DD");
         let overviewUrl =
           payload.config.portalUrl +
@@ -160,20 +138,32 @@ module.exports = NodeHelper.create({
           "&startTime=" + todayStr + " 00:00:00" +
           "&endTime=" + todayStr + " 23:59:59" +
           "&api_key=" + payload.config.apiKey;
-        portalDataClient
-          .get(overviewUrl, (res) => {
-            res.on("data", (d) => {
-              self.sendSocketNotification(
-                "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DAY_ENERGY_DATA_RECEIVED",
-                JSON.parse(d)
-              );
-            });
-          })
-          .on("error", (e) => {
-            console.error(e);
-          });
+        try {
+          const dayEnergy = await self.fetchJson(overviewUrl);
+          self.sendSocketNotification(
+            "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DAY_ENERGY_DATA_RECEIVED",
+            dayEnergy
+          );
+        } catch (e) {
+          console.error(e);
+        }
       }
     }
+  },
+
+  fetchJson: async function (url, options) {
+    const res = await fetch(url, options);
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(
+        "Request failed " +
+          res.status +
+          " " +
+          res.statusText +
+          (body ? ": " + body : "")
+      );
+    }
+    return res.json();
   },
 
   formatDate: function(date, format) {
