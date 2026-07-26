@@ -51,6 +51,8 @@ const ENDPOINTS = {
 module.exports = NodeHelper.create({
   start: function () {
     this.modbus = {}; // per site id
+    this.inFlight = {}; // per site id and endpoint
+    this.skipped = {};
   },
 
   stop: function () {
@@ -65,13 +67,44 @@ module.exports = NodeHelper.create({
       return;
     }
 
+    /* The frontend polls on a fixed interval no matter how long a read takes.
+     * A power flow over Modbus is five to eight round trips over the RS485
+     * chain, so a slow bus can easily push one poll past the next. Starting it
+     * anyway would queue work that is never worked off again: the backlog only
+     * grows, and the frontend ends up being served answers to requests made
+     * hours ago. Dropping the poll instead keeps the data current. */
+    const key = endpoint + "@" + payload.config.siteId;
+    if (this.inFlight[key]) {
+      this.reportSkip(key, endpoint);
+      return;
+    }
+    this.inFlight[key] = true;
+
     try {
       const data = await this.provide(endpoint, payload.config);
       this.sendSocketNotification(ENDPOINTS[endpoint].received, data);
     } catch (error) {
       // The frontend keeps showing the values it already has.
       console.error("[MMM-SolarEdge] " + endpoint + ": " + error.message);
+    } finally {
+      delete this.inFlight[key];
     }
+  },
+
+  /* A single skipped poll means nothing, the next one delivers. A run of them
+   * means the reads take longer than updateInterval, which is worth saying out
+   * loud rather than quietly showing values that never change. Logged at
+   * powers of ten so a permanently overloaded bus does not flood the log. */
+  reportSkip: function (key, endpoint) {
+    const count = (this.skipped[key] = (this.skipped[key] || 0) + 1);
+    if (Math.log10(count) % 1 !== 0) {
+      return;
+    }
+    console.warn(
+      "[MMM-SolarEdge] " + endpoint + ": the previous read is still running, " +
+        "skipping this one (" + count + " skipped so far). Raise " +
+        "updateInterval if this keeps happening."
+    );
   },
 
   provide: function (endpoint, config) {
