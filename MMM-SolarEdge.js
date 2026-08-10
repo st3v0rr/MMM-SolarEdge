@@ -1,6 +1,6 @@
-/* global Module */
+/* global Module, setTimeout */
 
-/* Magic Mirror
+/* MagicMirror²
  * Module: MMM-SolarEdge
  *
  * By Stefan Nachtrab
@@ -9,82 +9,177 @@
 
 Module.register("MMM-SolarEdge", {
   defaults: {
+    //How often the power flow is fetched. Applied as is over Modbus. The API
+    //cannot be polled anywhere near this fast without burning its daily budget
+    //of 300 requests, so there it is raised to minApiUpdateInterval.
     updateInterval: 5000,
-    retryDelay: 5000,
     siteId: undefined,
     apiKey: undefined,
-    userName: undefined,
-    userPassword: undefined,
-    updateIntervalBasicData: 1000 * 60 * 15, //every 15 minutes
+    updateIntervalBasicData: 1000 * 60 * 30, //every 30 minutes
     portalUrl: "https://monitoringapi.solaredge.com",
-    liveDataUrl: "https://monitoring.solaredge.com",
+    //"api" reads everything from the SolarEdge monitoring API,
+    //"modbus" reads the live power flow straight from the inverters instead.
+    dataSource: "api",
+    modbus: {
+      host: undefined, //e.g. the inverter itself or a Modbus/TCP proxy
+      port: 1502,
+      inverterUnitIds: [1], //leader first, then the followers
+      meterUnitId: undefined, //defaults to the first inverter unit
+      invertGridSign: false, //flip if export and import show up swapped
+      flowThreshold: 10, //W below which a flow is treated as zero
+      timeout: 5000
+    },
     showOverview: true,
     showDayEnergy: true,
-    compactMode: false,
     decimal: "comma",
     moduleRelativePath: "modules/MMM-SolarEdge", //workaround for nunjucks image location
-    primes: [
-      499, 997, 1499, 1997, 2503, 2999, 3499, 4001, 4493, 4999, 5501, 6007,
-      6491, 7001, 7499, 7993, 8501, 8999, 9497, 9773
-    ], //prime factors to avoid api limitation (429) in schedules
+    //false, or which site the mock data should describe: "pv" or "pvbatt".
     mockData: false //for development purposes only!
   },
 
   validDecimal: ["comma", "period"],
-    
+  validDataSource: ["api", "modbus"],
+  validMockData: ["pv", "pvbatt"],
+
+  //Modbus has no rate limit, the API has to last a whole day: 8 minutes leaves
+  //room for the basic data inside the 300 requests SolarEdge grants per day.
+  minApiUpdateInterval: 1000 * 60 * 8,
+
+  //Spread the first requests so they do not all fire at once on startup.
+  startupJitter: 3000,
+
   requiresVersion: "2.1.0", // Required version of MagicMirror
 
   start: function () {
-    var self = this;
-
     console.log("Starting module MMM-SolarEdge");
 
     //Flag for check if module is loaded
     this.loaded = false;
 
-    self.getCurrentPowerData();
-    setInterval(function () {
-      self.getCurrentPowerData();
-      self.updateDom();
-    }, this.config.updateInterval);
+    this.sanitizeConfig();
 
-    //sanitize deci parammaleter
-    if (this.validDecimal.indexOf(this.config.decimal) == -1) {
+    if (!this.configComplete()) {
+      //Nothing to talk to. The template says so, polling would only fill the
+      //log with authentication errors.
+      console.error("MMM-SolarEdge: incomplete configuration, not fetching");
+      this.loaded = true;
+      return;
+    }
+
+    this.getCurrentPowerData();
+    setInterval(() => this.getCurrentPowerData(), this.liveInterval);
+
+    if (this.canFetchBasicData()) {
+      //Details never change during a session, so it is fetched once.
+      setTimeout(() => this.getDetailsData(), this.startupJitter);
+      if (this.config.showOverview || this.config.showDayEnergy) {
+        setTimeout(() => this.getBasicData(), this.startupJitter * 2);
+        setInterval(
+          () => this.getBasicData(),
+          this.config.updateIntervalBasicData
+        );
+      }
+    }
+
+    this.loaded = true;
+  },
+
+  //Details, overview and day energy always come from the API, even when the
+  //power flow is read over Modbus - so they need a key. Mock data comes from
+  //file and needs nothing at all.
+  canFetchBasicData: function () {
+    return Boolean(this.config.mockData) || Boolean(this.config.apiKey);
+  },
+
+  sanitizeConfig: function () {
+    if (this.validDecimal.indexOf(this.config.decimal) === -1) {
       this.config.decimal = "comma";
     }
 
-    if (this.config.showOverview) {
-      setTimeout(
-        () => self.getOverviewData(),
-        this.config.primes.sort(() => Math.random() - 0.5)[0]
+    //mockData used to be a boolean. Keep that working, but settle on one type
+    //from here on so nothing downstream has to handle both.
+    if (
+      this.config.mockData &&
+      this.validMockData.indexOf(this.config.mockData) === -1
+    ) {
+      console.warn(
+        "MMM-SolarEdge: mockData expects " +
+          this.validMockData.map((v) => "\"" + v + "\"").join(" or ") +
+          ", using \"pvbatt\" for \"" + this.config.mockData + "\""
       );
-
-      setInterval(function () {
-        self.getOverviewData();
-        self.updateDom();
-      }, this.config.updateIntervalBasicData +
-        this.config.primes.sort(() => Math.random() - 0.5)[0]);
+      this.config.mockData = "pvbatt";
     }
 
-    if (this.config.showDayEnergy) {
-      setTimeout(
-        () => self.getDayEnergyData(),
-        this.config.primes.sort(() => Math.random() - 0.5)[0]
+    if (this.validDataSource.indexOf(this.config.dataSource) === -1) {
+      console.warn(
+        "MMM-SolarEdge: unknown dataSource \"" + this.config.dataSource +
+          "\", falling back to \"api\""
       );
-
-      setInterval(function () {
-        self.getDayEnergyData();
-        self.updateDom();
-      }, this.config.updateIntervalBasicData +
-        this.config.primes.sort(() => Math.random() - 0.5)[0]);
+      this.config.dataSource = "api";
     }
 
-    setTimeout(
-      () => self.getDetailsData(),
-      this.config.primes.sort(() => Math.random() - 0.5)[0]
+    //MagicMirror merges config and defaults one level deep only, so a partial
+    //modbus block would drop the remaining defaults.
+    this.config.modbus = Object.assign(
+      {},
+      this.defaults.modbus,
+      this.config.modbus
     );
 
-    this.loaded = true;
+    if (this.config.dataSource === "modbus" && !this.config.modbus.host) {
+      console.warn(
+        "MMM-SolarEdge: dataSource is \"modbus\" but modbus.host is not set, " +
+          "falling back to the monitoring API"
+      );
+      this.config.dataSource = "api";
+    }
+
+    //Checked after the dataSource is settled, so a fallback to the API cannot
+    //leave a five second interval pointed at a rate limited endpoint.
+    if (
+      this.config.dataSource === "api" &&
+      this.config.updateInterval < this.minApiUpdateInterval
+    ) {
+      console.warn(
+        "MMM-SolarEdge: updateInterval of " + this.config.updateInterval +
+          " ms would exceed the API limit of 300 requests per day, using " +
+          this.minApiUpdateInterval / 60000 + " min instead. Switch to " +
+          "dataSource \"modbus\" if you want the power flow in real time."
+      );
+      this.liveInterval = this.minApiUpdateInterval;
+    } else {
+      this.liveInterval = this.config.updateInterval;
+    }
+
+    //Modbus delivers the power flow on its own, so an API key is optional
+    //there - the long term views simply stay hidden without one.
+    if (!this.config.apiKey && this.config.dataSource === "modbus") {
+      if (this.config.showOverview || this.config.showDayEnergy) {
+        console.warn(
+          "MMM-SolarEdge: no apiKey set, hiding the overview and day energy " +
+            "views - those are only available through the monitoring API"
+        );
+      }
+      this.config.showOverview = false;
+      this.config.showDayEnergy = false;
+    }
+
+    if (this.config.userName || this.config.userPassword) {
+      console.warn(
+        "MMM-SolarEdge: userName and userPassword are no longer used. " +
+          "SolarEdge retired the portal live data endpoint, the module now " +
+          "uses the official API or Modbus/TCP instead."
+      );
+    }
+  },
+
+  getBasicData: function () {
+    if (this.config.showOverview) {
+      this.getOverviewData();
+    }
+    if (this.config.showDayEnergy) {
+      setTimeout(() => this.getDayEnergyData(), this.startupJitter);
+    }
   },
 
   getDetailsData: function () {
@@ -124,7 +219,7 @@ Module.register("MMM-SolarEdge", {
   },
 
   getDecimalAdjustedValue: function (value) {
-    if (this.config.decimal == "comma") {
+    if (this.config.decimal === "comma") {
       return value.toFixed(2).replace(".", "," );
     } else {
       return value.toFixed(2);
@@ -163,13 +258,7 @@ Module.register("MMM-SolarEdge", {
   },
 
   getTemplate: function () {
-    if (
-      this.config.apiKey === "" ||
-      this.config.siteId === "" ||
-      this.config.userName === "" ||
-      this.config.userPassword === "" ||
-      !this.loaded
-    ) {
+    if (!this.configComplete() || !this.loaded) {
       return "templates/default.njk";
     }
     if (this.dataNotificationCurrentPower !== undefined) {
@@ -185,8 +274,21 @@ Module.register("MMM-SolarEdge", {
     return "templates/default.njk";
   },
 
+  //Modbus needs a host, the API needs a key - the site id is needed either way.
+  configComplete: function () {
+    if (this.config.mockData) {
+      return true; //mock data is served without talking to anything
+    }
+    if (!this.config.siteId) {
+      return false;
+    }
+    return this.config.dataSource === "modbus"
+      ? Boolean(this.config.modbus.host)
+      : Boolean(this.config.apiKey);
+  },
+
   getTemplateData: function () {
-    if (this.config.apiKey === "" || this.config.siteId === "") {
+    if (!this.configComplete()) {
       return {
         status: "Missing configuration for MMM-SolarEdge.",
         config: this.config

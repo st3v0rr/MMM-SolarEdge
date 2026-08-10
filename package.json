@@ -1,25 +1,28 @@
 {
-	"name": "MMM-SolarEdge",
+	"name": "mmm-solarEdge",
 	"version": "1.0.0",
-	"description": "Todo: Insert description here!",
+	"description": "MagicMirror² module for displaying SolarEdge inverter and energy data.",
 	"main": "MMM-SolarEdge.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/st3v0rr/MMM-SolarEdge.git"
+	},
+	"keywords": [
+		"magicmirror",
+		"magicmirror-module",
+		"solaredge",
+		"solar",
+		"energy",
+		"dashboard"
+	],
 	"author": "Stefan Nachtrab",
 	"license": "MIT",
 	"devDependencies": {
-		"babel-eslint": "^10.1.0",
-		"eslint": "^7.32.0",
-		"eslint-config-prettier": "^8.3.0",
-		"eslint-plugin-prettier": "^3.4.1",
-		"grunt": "latest",
-		"grunt-eslint": "latest",
-		"grunt-jsonlint": "latest",
-		"grunt-markdownlint": "^1.0.13",
-		"grunt-stylelint": "latest",
-		"grunt-yamllint": "latest",
-		"prettier": "^2.3.2",
-		"prettier-eslint": "^13.0.0",
-		"prettier-eslint-cli": "^5.0.1",
-		"stylelint-config-standard": "latest",
-		"time-grunt": "latest"
+		"eslint": "^10.0.2",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-prettier": "^5.5.5",
+		"prettier": "^3.8.1",
+		"prettier-eslint": "^16.4.2",
+		"prettier-eslint-cli": "^8.0.1"
 	}
 }
