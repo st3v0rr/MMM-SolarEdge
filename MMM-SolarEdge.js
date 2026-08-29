@@ -1,4 +1,4 @@
-/* global Module, setTimeout */
+/* global Module, setTimeout, clearInterval */
 
 /* MagicMirror²
  * Module: MMM-SolarEdge
@@ -6,6 +6,11 @@
  * By Stefan Nachtrab
  * MIT Licensed.
  */
+
+//Shared across every instance, same pattern as MMM-Jeedom: MMM-PIR-Sensor
+//broadcasts USER_PRESENCE to all modules, so one flag is enough for all of them.
+//Defaults to true so nothing changes for setups without a PIR sensor.
+var SolarEdgeUserPresence = true;
 
 Module.register("MMM-SolarEdge", {
   defaults: {
@@ -34,7 +39,12 @@ Module.register("MMM-SolarEdge", {
     decimal: "comma",
     moduleRelativePath: "modules/MMM-SolarEdge", //workaround for nunjucks image location
     //false, or which site the mock data should describe: "pv" or "pvbatt".
-    mockData: false //for development purposes only!
+    mockData: false, //for development purposes only!
+    //Set to true to use updateInterval as configured even on the API, below
+    //minApiUpdateInterval. Only makes sense together with a presence sensor
+    //(see the README) that keeps the module from polling all day, otherwise
+    //this will burn through the daily request budget.
+    ignoreApiRateLimit: false
   },
 
   validDecimal: ["comma", "period"],
@@ -56,6 +66,20 @@ Module.register("MMM-SolarEdge", {
     //Flag for check if module is loaded
     this.loaded = false;
 
+    //Only poll SolarEdge while the screen is actually on (MMM-PIR-Sensor)
+    //and this module is visible, to save API calls.
+    this.moduleHidden = false;
+    this.powerIntervalID = null;
+    this.basicIntervalID = null;
+    //Tracks whether the module was active last time manageUpdateIntervals ran,
+    //so it only fetches an extra time on the inactive -> active transition.
+    //Starts true: the fetches below already cover the initial load.
+    this.wasActive = true;
+    //Last request error, if any - e.g. { endpoint, rateLimited, message },
+    //cleared as soon as a request succeeds again. Shown on the widget so a
+    //rate limit is not mistaken for a currently accurate reading.
+    this.apiError = null;
+
     this.sanitizeConfig();
 
     if (!this.configComplete()) {
@@ -67,21 +91,93 @@ Module.register("MMM-SolarEdge", {
     }
 
     this.getCurrentPowerData();
-    setInterval(() => this.getCurrentPowerData(), this.liveInterval);
+    this.startPowerInterval();
 
     if (this.canFetchBasicData()) {
       //Details never change during a session, so it is fetched once.
       setTimeout(() => this.getDetailsData(), this.startupJitter);
       if (this.config.showOverview || this.config.showDayEnergy) {
-        setTimeout(() => this.getBasicData(), this.startupJitter * 2);
-        setInterval(
-          () => this.getBasicData(),
-          this.config.updateIntervalBasicData
-        );
+        setTimeout(() => {
+          this.getBasicData();
+          this.startBasicInterval();
+        }, this.startupJitter * 2);
       }
     }
 
     this.loaded = true;
+  },
+
+  startPowerInterval: function () {
+    if (this.powerIntervalID === null) {
+      this.powerIntervalID = setInterval(
+        () => this.getCurrentPowerData(),
+        this.liveInterval
+      );
+    }
+  },
+
+  startBasicInterval: function () {
+    if (
+      this.basicIntervalID === null &&
+      this.canFetchBasicData() &&
+      (this.config.showOverview || this.config.showDayEnergy)
+    ) {
+      this.basicIntervalID = setInterval(
+        () => this.getBasicData(),
+        this.config.updateIntervalBasicData
+      );
+    }
+  },
+
+  stopUpdateIntervals: function () {
+    clearInterval(this.powerIntervalID);
+    this.powerIntervalID = null;
+    clearInterval(this.basicIntervalID);
+    this.basicIntervalID = null;
+  },
+
+  //Called whenever the screen (USER_PRESENCE from MMM-PIR-Sensor) or this
+  //module's own visibility changes. Fetches fresh data right away and resumes
+  //the periodic polling when someone can actually see the module again, stops
+  //it otherwise. The immediate fetch only fires on the transition from
+  //inactive to active, so it does not add extra requests while already active.
+  manageUpdateIntervals: function () {
+    var isActive =
+      this.configComplete() &&
+      SolarEdgeUserPresence === true &&
+      this.moduleHidden === false;
+
+    if (isActive) {
+      if (!this.wasActive) {
+        this.getCurrentPowerData();
+        this.getBasicData();
+      }
+      this.startPowerInterval();
+      this.startBasicInterval();
+    } else {
+      this.stopUpdateIntervals();
+    }
+    this.wasActive = isActive;
+  },
+
+  suspend: function () {
+    //Core calls this when the module is hidden (e.g. by a carousel).
+    this.moduleHidden = true;
+    this.manageUpdateIntervals();
+  },
+
+  resume: function () {
+    //Core calls this when the module is shown again.
+    this.moduleHidden = false;
+    this.manageUpdateIntervals();
+  },
+
+  notificationReceived: function (notification, payload) {
+    // Broadcast by MMM-PIR-Sensor, see its README.
+    if (notification === "USER_PRESENCE") {
+      SolarEdgeUserPresence = payload;
+      this.manageUpdateIntervals();
+    }
   },
 
   //Details, overview and day energy always come from the API, even when the
@@ -140,13 +236,26 @@ Module.register("MMM-SolarEdge", {
       this.config.dataSource === "api" &&
       this.config.updateInterval < this.minApiUpdateInterval
     ) {
-      console.warn(
-        "MMM-SolarEdge: updateInterval of " + this.config.updateInterval +
-          " ms would exceed the API limit of 300 requests per day, using " +
-          this.minApiUpdateInterval / 60000 + " min instead. Switch to " +
-          "dataSource \"modbus\" if you want the power flow in real time."
-      );
-      this.liveInterval = this.minApiUpdateInterval;
+      if (this.config.ignoreApiRateLimit) {
+        console.warn(
+          "MMM-SolarEdge: ignoreApiRateLimit is set, using the configured " +
+            "updateInterval of " + this.config.updateInterval + " ms on the " +
+            "API as is. Make sure something (e.g. a presence sensor) keeps " +
+            "this from polling all day, or you will exceed the 300 " +
+            "requests per day and start getting 429 responses."
+        );
+        this.liveInterval = this.config.updateInterval;
+      } else {
+        console.warn(
+          "MMM-SolarEdge: updateInterval of " + this.config.updateInterval +
+            " ms would exceed the API limit of 300 requests per day, using " +
+            this.minApiUpdateInterval / 60000 + " min instead. Switch to " +
+            "dataSource \"modbus\", or set \"ignoreApiRateLimit\" if you " +
+            "know what you are doing (e.g. a presence sensor already " +
+            "limits polling to when the screen is on)."
+        );
+        this.liveInterval = this.minApiUpdateInterval;
+      }
     } else {
       this.liveInterval = this.config.updateInterval;
     }
@@ -287,6 +396,15 @@ Module.register("MMM-SolarEdge", {
       : Boolean(this.config.apiKey);
   },
 
+  //Translated message for the last request error, if any - undefined while
+  //everything is fine, so templates can just check for truthiness.
+  getApiErrorStatus: function () {
+    if (!this.apiError) {
+      return undefined;
+    }
+    return this.translate(this.apiError.rateLimited ? "RATE_LIMITED" : "API_ERROR");
+  },
+
   getTemplateData: function () {
     if (!this.configComplete()) {
       return {
@@ -307,12 +425,13 @@ Module.register("MMM-SolarEdge", {
         arrowDirections: this.mapArrowDirections(),
         powerAndStatus: this.mapCurrentPowerAndStatus(),
         lifeTimeData: this.mapLifeTime(),
-        dayEnergyData: this.mapDayEnergy()
+        dayEnergyData: this.mapDayEnergy(),
+        status: this.getApiErrorStatus()
       };
     }
 
     return {
-      status: "Loading MMM-SolarEdge...",
+      status: this.getApiErrorStatus() || "Loading MMM-SolarEdge...",
       config: this.config
     };
   },
@@ -432,6 +551,21 @@ Module.register("MMM-SolarEdge", {
 
   // socketNotificationReceived from helper
   socketNotificationReceived: function (notification, payload) {
+    if (notification.endsWith("_DATA_RECEIVED")) {
+      // Any successful response clears a previous error - the rate limit is
+      // per site rather than per endpoint, so one succeeding again means it
+      // is gone for all of them.
+      this.apiError = null;
+    }
+
+    if (
+      notification === "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_ERROR_RECEIVED"
+    ) {
+      this.apiError = payload;
+      this.updateDom();
+      return;
+    }
+
     if (
       notification ===
       "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_CURRENTPOWER_DATA_RECEIVED"
