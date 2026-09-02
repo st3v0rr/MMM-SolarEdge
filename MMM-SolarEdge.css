@@ -1,7 +1,7 @@
 .solaredge-container {
-  max-width: 500px;
-  margin-right: auto;
-  margin-left: auto;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 .solaredge-parent-pv-battery {
