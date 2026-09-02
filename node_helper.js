@@ -18,6 +18,7 @@ var path = require("path");
 var SolarEdgeModbus = require("./lib/solaredge-modbus");
 
 const NOTIFICATION_PREFIX = "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_";
+const ERROR_RECEIVED = NOTIFICATION_PREFIX + "ERROR_RECEIVED";
 
 /* Which site the mock data describes, selected via the mockData option. */
 const MOCK_VARIANTS = {
@@ -84,8 +85,15 @@ module.exports = NodeHelper.create({
       const data = await this.provide(endpoint, payload.config);
       this.sendSocketNotification(ENDPOINTS[endpoint].received, data);
     } catch (error) {
-      // The frontend keeps showing the values it already has.
+      // The frontend keeps showing the values it already has, but is told
+      // about the failure so it can flag it - a rate limit especially is
+      // worth knowing about, since it will not clear up until tomorrow.
       console.error("[MMM-SolarEdge] " + endpoint + ": " + error.message);
+      this.sendSocketNotification(ERROR_RECEIVED, {
+        endpoint,
+        rateLimited: Boolean(error.rateLimited),
+        message: error.message
+      });
     } finally {
       delete this.inFlight[key];
     }
@@ -191,10 +199,12 @@ module.exports = NodeHelper.create({
     const response = await fetch(this.buildUrl(endpoint, config));
 
     if (response.status === 429) {
-      throw new Error(
+      const error = new Error(
         "Rate limited by SolarEdge - the site is over its daily request " +
           "budget. Increase updateInterval or updateIntervalBasicData."
       );
+      error.rateLimited = true;
+      throw error;
     }
     if (!response.ok) {
       const body = await response.text().catch(() => "");

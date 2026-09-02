@@ -12,5 +12,7 @@
 	"PRODUCTION": "Production",
 	"FEED_IN": "Feed in",
 	"PURCHASED": "Purchased",
-	"SELF_CONSUMPTION": "Self consumpt."
+	"SELF_CONSUMPTION": "Self consumpt.",
+	"RATE_LIMITED": "SolarEdge API rate limit reached, showing last known data",
+	"API_ERROR": "Could not reach SolarEdge, showing last known data"
 }

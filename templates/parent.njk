@@ -1,5 +1,9 @@
 <div class="solaredge-container">
 
+  {% if status %}
+    <div>{{ status }}</div>
+  {% endif %}
+
   {% block pv_installation %}
     <!-- PV installation graph -->
   {% endblock %}

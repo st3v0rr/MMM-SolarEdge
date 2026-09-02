@@ -12,5 +12,7 @@
 	"PRODUCTION": "Produktion",
 	"FEED_IN": "Eingespeist",
 	"PURCHASED": "Bezogen",
-	"SELF_CONSUMPTION": "Eigenverbrauch"
+	"SELF_CONSUMPTION": "Eigenverbrauch",
+	"RATE_LIMITED": "API-Limit von SolarEdge erreicht, letzte bekannte Daten werden angezeigt",
+	"API_ERROR": "SolarEdge nicht erreichbar, letzte bekannte Daten werden angezeigt"
 }
