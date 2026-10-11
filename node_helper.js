@@ -3,7 +3,7 @@
  * Node Helper: MMM-SolarEdge
  *
  * Serves three data sources behind one set of notifications:
- *   - the SolarEdge v1 monitoring API (default)
+ *   - the SolarEdge V2 Basic Monitoring API for energy data
  *   - Modbus/TCP straight from the inverters, which has no rate limit
  *   - mock files for development
  *
@@ -16,6 +16,8 @@ var fs = require("fs");
 var path = require("path");
 
 var SolarEdgeModbus = require("./lib/solaredge-modbus");
+const siteAccess = require("./lib/site-access");
+const oauthRoutes = require("./lib/oauth-routes");
 
 const NOTIFICATION_PREFIX = "MMM-SolarEdge-NOTIFICATION_SOLAREDGE_";
 
@@ -49,10 +51,20 @@ const ENDPOINTS = {
 };
 
 module.exports = NodeHelper.create({
+  setExpressApp: function (app) {
+    this.expressApp = app;
+    oauthRoutes.install(app);
+  },
+
+  getServerModuleConfig: function () {
+    return siteAccess.moduleConfig();
+  },
+
   start: function () {
     this.modbus = {}; // per site id
     this.inFlight = {}; // per site id and endpoint
     this.skipped = {};
+    this.apiCache = {};
   },
 
   stop: function () {
@@ -73,7 +85,21 @@ module.exports = NodeHelper.create({
      * anyway would queue work that is never worked off again: the backlog only
      * grows, and the frontend ends up being served answers to requests made
      * hours ago. Dropping the poll instead keeps the data current. */
-    const key = endpoint + "@" + payload.config.siteId;
+    // Socket payloads are browser-controlled. Never use them to choose the
+    // destination for a request carrying server-side OAuth credentials.
+    const server = this.getServerModuleConfig();
+    if (!server.siteId) return;
+    const config = {
+      ...payload.config,
+      ...server,
+      siteId: server.siteId,
+      modbus: { ...payload.config?.modbus, ...server.modbus, host: server.modbus?.host },
+      // The browser payload is untrusted; only the on-server MagicMirror
+      // config may select a reverse proxy that receives the bearer token.
+      portalUrl: server.portalUrl || "https://monitoringapi.solaredge.com/v2"
+    };
+    if (endpoint === "currentPower" && (config.dataSource !== "modbus" || !config.modbus.host)) return;
+    const key = endpoint + "@" + config.siteId;
     if (this.inFlight[key]) {
       this.reportSkip(key, endpoint);
       return;
@@ -81,11 +107,11 @@ module.exports = NodeHelper.create({
     this.inFlight[key] = true;
 
     try {
-      const data = await this.provide(endpoint, payload.config);
+      const data = await this.provideCached(endpoint, config);
       this.sendSocketNotification(ENDPOINTS[endpoint].received, data);
     } catch (error) {
       // The frontend keeps showing the values it already has.
-      console.error("[MMM-SolarEdge] " + endpoint + ": " + error.message);
+      console.error("[MMM-SolarEdge] " + endpoint + ": request failed (check private backend credentials and connectivity)");
     } finally {
       delete this.inFlight[key];
     }
@@ -105,6 +131,25 @@ module.exports = NodeHelper.create({
         "skipping this one (" + count + " skipped so far). Raise " +
         "updateInterval if this keeps happening."
     );
+  },
+
+  // Cache Basic API results per site across browser clients. The two-hour
+  // floor also protects the shared monthly credit pool from fast client timers.
+  provideCached: function (endpoint, config) {
+    if (config.mockData || endpoint === "currentPower") return this.provide(endpoint, config);
+    const key = endpoint + "@" + config.siteId;
+    this.apiCache ||= {};
+    const cached = this.apiCache[key];
+    const ttl = endpoint === "details" ? Infinity : 1000 * 60 * 60 * 2;
+    if (cached && Date.now() - cached.at < ttl) return Promise.resolve(cached.data);
+    const startedAt = Date.now();
+    return Promise.resolve(this.provide(endpoint, config)).then((data) => {
+      // Start the TTL with the request, not its response. Otherwise a poll
+      // scheduled exactly two hours later hits the just-unexpired cache and
+      // the next real update only happens four hours after startup.
+      this.apiCache[key] = { at: startedAt, data };
+      return data;
+    });
   },
 
   provide: function (endpoint, config) {
@@ -188,56 +233,86 @@ module.exports = NodeHelper.create({
   /* ------------------------------------------------------------------- api */
 
   readApi: async function (endpoint, config) {
-    const response = await fetch(this.buildUrl(endpoint, config));
-
-    if (response.status === 429) {
-      throw new Error(
-        "Rate limited by SolarEdge - the site is over its daily request " +
-          "budget. Increase updateInterval or updateIntervalBasicData."
-      );
-    }
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      throw new Error(
-        "Request failed " + response.status + " " + response.statusText +
-          (body ? ": " + body : "")
-      );
-    }
-    return response.json();
-  },
-
-  buildUrl: function (endpoint, config) {
-    const site = config.portalUrl + "/site/" + config.siteId;
-    const key = "api_key=" + config.apiKey;
-
     if (endpoint === "currentPower") {
-      return site + "/currentPowerFlow?" + key;
+      throw new Error("V2 Basic has no live power flow; configure Modbus/TCP");
     }
+    const request = async (url) => {
+      const headers = { Authorization: "Bearer " + await siteAccess.accessToken() };
+      const response = await fetch(url, { headers });
+      if (response.status === 429) {
+        throw new Error("SolarEdge V2 credit limit reached; increase updateIntervalBasicData");
+      }
+      if (!response.ok) {
+        // Do not log response bodies: proxies can echo credentials.
+        throw new Error("SolarEdge V2 request failed: HTTP " + response.status);
+      }
+      return response.json();
+    };
     if (endpoint === "details") {
-      return site + "/details?" + key;
-    }
-    if (endpoint === "overview") {
-      return site + "/overview?" + key;
+      return { details: await request(this.buildUrl(endpoint, config)) };
     }
     if (endpoint === "dayEnergy") {
-      const today = this.formatDate(new Date(), "YYYY-MM-DD");
-      return (
-        site + "/energyDetails?" +
-        "meters=Production,Consumption,SelfConsumption,FeedIn,Purchased" +
-        "&timeUnit=DAY" +
-        "&startTime=" + today + " 00:00:00" +
-        "&endTime=" + today + " 23:59:59" +
-        "&" + key
-      );
+      const overview = await request(this.buildUrl("overview", config));
+      const production = overview.production || {};
+      const consumption = overview.consumption || {};
+      const value = (number, unit) => {
+        const scale = { WH: 1, KWH: 1000, MWH: 1000000, GWH: 1000000000 }[String(unit).toUpperCase()];
+        if (number == null) return null;
+        if (!Number.isFinite(number) || !scale) throw new Error("Unexpected SolarEdge V2 overview unit or value");
+        return number * scale;
+      };
+      const meter = (type, number, unit) => ({ type, values: [{ value: value(number, unit) }] });
+      return { energyDetails: { meters: [
+        meter("Production", production.total, production.unit),
+        meter("Consumption", consumption.total, consumption.unit),
+        meter("FeedIn", production.toGrid, production.unit),
+        meter("Purchased", consumption.fromGrid, consumption.unit),
+        meter("SelfConsumption", production.toSelfConsumption, production.unit)
+      ] } };
     }
-    throw new Error("Unknown endpoint " + endpoint);
+    const now = new Date();
+    const range = (start) => ({ from: start.toISOString(), to: now.toISOString() });
+    const monthly = new Date(now.getFullYear(), now.getMonth(), 1);
+    const yearly = new Date(now.getFullYear(), 0, 1);
+    const [today, month, year] = await Promise.all([
+      request(this.buildUrl("energy", config, "DAY", range(new Date(now.getFullYear(), now.getMonth(), now.getDate())))),
+      request(this.buildUrl("energy", config, "MONTH", range(monthly))),
+      request(this.buildUrl("energy", config, "YEAR", range(yearly)))
+    ]);
+    const total = (result) => {
+      if (String(result.unit).toUpperCase() !== "WH" || !Array.isArray(result.values)) {
+        throw new Error("Unexpected SolarEdge V2 energy response");
+      }
+      return result.values.reduce((sum, entry) => sum + (Number.isFinite(entry.value) ? entry.value : 0), 0);
+    };
+    return { overview: {
+      lastDayData: { energy: total(today) },
+      lastMonthData: { energy: total(month) },
+      lastYearData: { energy: total(year) }
+    } };
   },
 
-  formatDate: function (date, format) {
-    let month = date.getMonth() + 1;
-    return format
-      .replace("YYYY", date.getFullYear())
-      .replace("MM", month.toString().padStart(2, "0"))
-      .replace("DD", date.getDate().toString().padStart(2, "0"));
+  buildUrl: function (endpoint, config, resolution, range) {
+    const configured = config.portalUrl || "https://monitoringapi.solaredge.com/v2";
+    const url = new URL(configured);
+    // Explicit LAN reverse proxies may use HTTP. Refuse non-LAN HTTP
+    // destinations because the bearer token travels in the request header.
+    const lan = /^(localhost|127\.0\.0\.1|10\.(?:\d{1,3}\.){2}\d{1,3}|192\.168\.(?:\d{1,3}\.)\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.(?:\d{1,3}\.)\d{1,3})$/i.test(url.hostname);
+    if (!(["http:", "https:"].includes(url.protocol)) || url.username || url.password || url.search || url.hash ||
+        (url.protocol === "http:" && !lan)) {
+      throw new Error("Invalid SolarEdge API proxy URL in server config");
+    }
+    // Existing V1 reverse-proxy entries point at the proxy root. V2 requests
+    // need the /v2 path; an already configured /v2 suffix is not duplicated.
+    const base = url.origin + (url.pathname.replace(/\/$/, "").endsWith("/v2")
+      ? url.pathname.replace(/\/$/, "") : url.pathname.replace(/\/$/, "") + "/v2");
+    const site = base + "/sites/" + encodeURIComponent(config.siteId);
+    if (endpoint === "details") return site;
+    if (endpoint === "overview") return site + "/overview";
+    if (endpoint === "energy") {
+      const params = new URLSearchParams({ resolution, unit: "WH", from: range.from, to: range.to });
+      return site + "/energy?" + params;
+    }
+    throw new Error("Unknown endpoint " + endpoint);
   }
 });
