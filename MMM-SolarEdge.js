@@ -15,7 +15,7 @@ Module.register("MMM-SolarEdge", {
     clientId: undefined,
     clientSecret: undefined,
     redirectUri: "http://localhost:8080/oauth/callback",
-    updateIntervalBasicData: 1000 * 60 * 60 * 6, //every six hours
+    updateIntervalBasicData: 1000 * 60 * 60 * 2, //every two hours, plus cache timing margin
     portalUrl: "https://monitoringapi.solaredge.com/v2",
     //"api" reads everything from the SolarEdge monitoring API,
     //"modbus" reads the live power flow straight from the inverters instead.
@@ -73,10 +73,10 @@ Module.register("MMM-SolarEdge", {
       if (this.config.showOverview || this.config.showDayEnergy) {
         setTimeout(() => {
           this.getBasicData();
-          // Give the backend's six-hour cache five minutes to expire even
+          // Give the backend's two-hour cache five minutes to expire even
           // if the previous request arrived later over the socket. Without
           // this margin a slightly early tick can show stale data until the
-          // following cycle (roughly twelve hours after startup).
+          // following cycle (roughly four hours after startup).
           setInterval(
             () => this.getBasicData(),
             this.config.updateIntervalBasicData + 1000 * 60 * 5
@@ -135,11 +135,11 @@ Module.register("MMM-SolarEdge", {
       this.config.dataSource = "api";
     }
     // V2 Basic costs four credits per complete energy poll. Do not schedule
-    // a fast frontend timer even though the backend also caches for six hours.
-    const basicFloor = 1000 * 60 * 60 * 6;
+    // a fast frontend timer even though the backend also caches for two hours.
+    const basicFloor = 1000 * 60 * 60 * 2;
     if (!Number.isFinite(this.config.updateIntervalBasicData) ||
         this.config.updateIntervalBasicData < basicFloor) {
-      console.warn("MMM-SolarEdge: invalid or too-fast basic polling; using six hours for V2 credits");
+      console.warn("MMM-SolarEdge: invalid or too-fast basic polling; using two hours for V2 credits");
       this.config.updateIntervalBasicData = basicFloor;
     }
     if (!Number.isFinite(this.config.updateInterval) || this.config.updateInterval < 1000) {

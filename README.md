@@ -57,7 +57,7 @@ power or a simulated flow. Configure Modbus/TCP for live power. If Modbus is
 selected without `modbus.host`, the module warns and falls back to the monitoring API.
 Modbus live readings work without OAuth credentials. If `clientId` or
 `clientSecret` is missing, the cloud overview and energy views are disabled;
-API-only mode instead reports incomplete configuration. The six-hour V2
+API-only mode instead reports incomplete configuration. The two-hour V2
 polling minimum is applied after a Modbus-to-API fallback; `updateInterval`
 controls only Modbus reads and is reset to 5000 ms if invalid or below 1000 ms.
 
@@ -69,19 +69,19 @@ proxy, so it must be under your control and must forward V2 paths and headers.
 Browser-provided URL overrides are ignored. An existing V1-only reverse proxy
 must be upgraded to forward `/v2` before cloud data can work.
 
-Basic energy polls roughly every six hours by default (a six-hour minimum plus
+Basic energy polls roughly every two hours by default (a two-hour minimum plus
 five minutes of timing margin so the backend cache has expired): each cycle
 costs four V2 calls (three production-energy ranges and one daily overview),
-plus one site-details call at startup. With a 2,000-credit/month free tier and
-a 30-day month, one site uses at most 481 calls (480 energy + 1 details) with
-continuous uptime. The backend caches each endpoint per site for at least six
-hours and details for its lifetime, so multiple browser clients share the same
-results instead of multiplying calls. A restart clears the cache and adds
-another initial batch; other apps or sites sharing the allowance also consume
-credits. An hourly four-call schedule would cost 2,881 calls/month and exceed
-that tier. Do not set `updateIntervalBasicData` below six hours; the backend
-enforces a six-hour floor for API reads. Check your actual allowance and usage
-in the portal.
+plus one site-details call at startup. That is about 46 energy calls per day
+and up to 1,384 in a continuously running 30-day period, plus one details call.
+With a 2,000-credit/month free tier, this leaves about 615 credits for restarts
+and other users of the allowance. The backend caches each endpoint per site for
+at least two hours and details for its lifetime, so multiple browser clients
+share the same results instead of multiplying calls. A restart clears the cache
+and adds another initial batch; other apps or sites sharing the allowance also
+consume credits. Do not set `updateIntervalBasicData` below two hours; the
+backend enforces a two-hour floor for API reads. Check your actual allowance
+and usage in the portal. OAuth token exchange costs are not included here.
 Only mock fixtures are used in automated tests; no paid API requests are made.
 
 ### `dataSource: "modbus"`
@@ -130,7 +130,7 @@ delivering fresher data.
 | `siteId`                          | *Required* The Site ID of the SolarEdge system you wish to monitor, which can be found in the Dashboard https://monitoring.solaredge.com
 | `dataSource`                      | *Optional* `"api"` (default, energy-only) or `"modbus"` (live power plus energy); missing Modbus host falls back to API
 | `updateInterval`                  | *Optional* How often the power flow is fetched, default is 5000. Applied as is over Modbus. Modbus only
-| `updateIntervalBasicData`         | *Optional* Overview and energy poll interval, default/minimum six hours; shorter or invalid values are reset to six hours (backend cache also enforces this floor)
+| `updateIntervalBasicData`         | *Optional* Overview and energy poll interval, default/minimum two hours; shorter or invalid values are reset to two hours (backend cache also enforces this floor, plus five minutes of frontend timing margin)
 | `showOverview`                    | *Optional* Enables/disables the long term data view, default is true
 | `showDayEnergy`                   | *Optional* Enables/disables the day energy data view, default is true
 | `decimal`                         | *Optional* The decimal symbol that will be used to display numbers. Possible values are "comma" or "period". Default is *comma*.
@@ -205,7 +205,7 @@ updating your production mirror:
    ```
 
    **Leave the SSH connection open.** In the browser on that **same computer**, open `http://localhost:8080/oauth/start` and finish the SolarEdge consent in the same browser profile. Do **not** open `http://192.168.1.100:8080/oauth/start`: the OAuth routes accept only `localhost:8080`, and the registered callback also points to `localhost:8080`. Local port 8080 must be free on the browser computer; changing just the tunnel's local port will not match the registered callback. Do not put your SSH password in this file or the module config. A ten-minute one-use state cookie binds the flow. A rejected or expired flow needs a fresh `/oauth/start`. On success the helper saves the token file; every refresh rotates and persists it. If persistence fails after an exchange, reauthorize; the previous token may already be invalid.
-6. **Verify** Modbus live values (if configured) and V2 day/month/year energy data. Watch server logs and developer-portal credits. Basic polling defaults to six hours. Changing client credentials or losing the token requires reauthorization.
+6. **Verify** Modbus live values (if configured) and V2 day/month/year energy data. Watch server logs and developer-portal credits. Basic polling defaults to about two hours and five minutes. Changing client credentials or losing the token requires reauthorization.
 
 If SolarEdge says **“We couldn't verify your account” before returning to the
 callback**, first try the homeowner login associated with the site. If it still

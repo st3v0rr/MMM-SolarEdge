@@ -91,7 +91,7 @@ test("V2 Basic does not request live power", async () => {
 
 
 test("cache TTL starts when the request starts, not after a slow response", async () => {
-  const ttl = 1000 * 60 * 60 * 6;
+  const ttl = 1000 * 60 * 60 * 2;
   let calls = 0;
   const instance = Object.assign({}, helper, {
     apiCache: {},
@@ -107,11 +107,11 @@ test("cache TTL starts when the request starts, not after a slow response", asyn
   const responseFinished = Date.now();
   assert.ok(instance.apiCache["overview@42"].at >= requestStarted);
   assert.ok(instance.apiCache["overview@42"].at <= responseFinished - 15);
-  // Simulate the six-hour poll without waiting or calling the actual API.
+  // Simulate the two-hour poll without waiting or calling the actual API.
   instance.apiCache["overview@42"].at -= ttl;
   assert.equal((await instance.provideCached("overview", cfg)).calls, 2);
 });
-test("six-hour backend cache shares Basic reads across clients", async () => {
+test("two-hour backend cache shares Basic reads across clients", async () => {
   let calls = 0;
   const instance = Object.assign({}, helper, {
     apiCache: {}, provide: async () => ({ serial: ++calls })
@@ -122,6 +122,6 @@ test("six-hour backend cache shares Basic reads across clients", async () => {
   assert.equal((await instance.provideCached("dayEnergy", cfg)).serial, 2);
   assert.equal((await instance.provideCached("details", cfg)).serial, 3);
   assert.equal((await instance.provideCached("details", cfg)).serial, 3);
-  instance.apiCache["overview@42"].at -= 1000 * 60 * 60 * 6;
+  instance.apiCache["overview@42"].at -= 1000 * 60 * 60 * 2;
   assert.equal((await instance.provideCached("overview", cfg)).serial, 4);
 });

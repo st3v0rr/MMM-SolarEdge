@@ -20,6 +20,7 @@ function moduleWith(config) {
 test("default API mode renders energy without live power polling", () => {
   const { module, notifications } = moduleWith({});
   module.start();
+  assert.equal(module.config.updateIntervalBasicData, 2 * 60 * 60 * 1000);
   assert.equal(module.config.dataSource, "api");
   assert.equal(module.getTemplate(), "templates/energy.njk");
   assert.ok(!notifications.some(n => n.includes("CURRENTPOWER")));
@@ -43,7 +44,7 @@ test("polling intervals and missing OAuth settings are validated after Modbus fa
     updateInterval: 0, updateIntervalBasicData: 1 });
   noAuth.module.start();
   assert.equal(noAuth.module.config.updateInterval, 5000);
-  assert.equal(noAuth.module.config.updateIntervalBasicData, 21600000);
+  assert.equal(noAuth.module.config.updateIntervalBasicData, 7200000);
   assert.equal(noAuth.module.config.showOverview, false);
   assert.equal(noAuth.module.config.showDayEnergy, false);
   assert.equal(noAuth.module.canFetchBasicData(), false);

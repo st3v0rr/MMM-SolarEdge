@@ -133,20 +133,20 @@ module.exports = NodeHelper.create({
     );
   },
 
-  // Cache Basic API results per site across browser clients. The six-hour
+  // Cache Basic API results per site across browser clients. The two-hour
   // floor also protects the shared monthly credit pool from fast client timers.
   provideCached: function (endpoint, config) {
     if (config.mockData || endpoint === "currentPower") return this.provide(endpoint, config);
     const key = endpoint + "@" + config.siteId;
     this.apiCache ||= {};
     const cached = this.apiCache[key];
-    const ttl = endpoint === "details" ? Infinity : 1000 * 60 * 60 * 6;
+    const ttl = endpoint === "details" ? Infinity : 1000 * 60 * 60 * 2;
     if (cached && Date.now() - cached.at < ttl) return Promise.resolve(cached.data);
     const startedAt = Date.now();
     return Promise.resolve(this.provide(endpoint, config)).then((data) => {
       // Start the TTL with the request, not its response. Otherwise a poll
-      // scheduled exactly six hours later hits the just-unexpired cache and
-      // the next real update only happens twelve hours after startup.
+      // scheduled exactly two hours later hits the just-unexpired cache and
+      // the next real update only happens four hours after startup.
       this.apiCache[key] = { at: startedAt, data };
       return data;
     });
