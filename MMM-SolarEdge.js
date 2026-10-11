@@ -9,14 +9,14 @@
 
 Module.register("MMM-SolarEdge", {
   defaults: {
-    //How often the power flow is fetched. Applied as is over Modbus. The API
-    //cannot be polled anywhere near this fast without burning its daily budget
-    //of 300 requests, so there it is raised to minApiUpdateInterval.
+    // Live power polling applies only to Modbus.
     updateInterval: 5000,
     siteId: undefined,
-    apiKey: undefined,
-    updateIntervalBasicData: 1000 * 60 * 30, //every 30 minutes
-    portalUrl: "https://monitoringapi.solaredge.com",
+    clientId: undefined,
+    clientSecret: undefined,
+    redirectUri: "http://localhost:8080/oauth/callback",
+    updateIntervalBasicData: 1000 * 60 * 60 * 6, //every six hours
+    portalUrl: "https://monitoringapi.solaredge.com/v2",
     //"api" reads everything from the SolarEdge monitoring API,
     //"modbus" reads the live power flow straight from the inverters instead.
     dataSource: "api",
@@ -41,10 +41,6 @@ Module.register("MMM-SolarEdge", {
   validDataSource: ["api", "modbus"],
   validMockData: ["pv", "pvbatt"],
 
-  //Modbus has no rate limit, the API has to last a whole day: 8 minutes leaves
-  //room for the basic data inside the 300 requests SolarEdge grants per day.
-  minApiUpdateInterval: 1000 * 60 * 8,
-
   //Spread the first requests so they do not all fire at once on startup.
   startupJitter: 3000,
 
@@ -66,8 +62,10 @@ Module.register("MMM-SolarEdge", {
       return;
     }
 
-    this.getCurrentPowerData();
-    setInterval(() => this.getCurrentPowerData(), this.liveInterval);
+    if (this.config.dataSource === "modbus") {
+      this.getCurrentPowerData();
+      setInterval(() => this.getCurrentPowerData(), this.config.updateInterval);
+    }
 
     if (this.canFetchBasicData()) {
       //Details never change during a session, so it is fetched once.
@@ -84,11 +82,11 @@ Module.register("MMM-SolarEdge", {
     this.loaded = true;
   },
 
-  //Details, overview and day energy always come from the API, even when the
-  //power flow is read over Modbus - so they need a key. Mock data comes from
-  //file and needs nothing at all.
+  // Cloud energy and details need Site Access credentials even with Modbus;
+  // mock data is served locally without credentials.
   canFetchBasicData: function () {
-    return Boolean(this.config.mockData) || Boolean(this.config.apiKey);
+    return Boolean(this.config.mockData) ||
+      (Boolean(this.config.siteId) && Boolean(this.config.clientId) && Boolean(this.config.clientSecret));
   },
 
   sanitizeConfig: function () {
@@ -127,41 +125,33 @@ Module.register("MMM-SolarEdge", {
     );
 
     if (this.config.dataSource === "modbus" && !this.config.modbus.host) {
-      console.warn(
-        "MMM-SolarEdge: dataSource is \"modbus\" but modbus.host is not set, " +
-          "falling back to the monitoring API"
-      );
+      console.warn("MMM-SolarEdge: modbus.host is not set, falling back to the monitoring API");
       this.config.dataSource = "api";
     }
-
-    //Checked after the dataSource is settled, so a fallback to the API cannot
-    //leave a five second interval pointed at a rate limited endpoint.
-    if (
-      this.config.dataSource === "api" &&
-      this.config.updateInterval < this.minApiUpdateInterval
-    ) {
-      console.warn(
-        "MMM-SolarEdge: updateInterval of " + this.config.updateInterval +
-          " ms would exceed the API limit of 300 requests per day, using " +
-          this.minApiUpdateInterval / 60000 + " min instead. Switch to " +
-          "dataSource \"modbus\" if you want the power flow in real time."
-      );
-      this.liveInterval = this.minApiUpdateInterval;
-    } else {
-      this.liveInterval = this.config.updateInterval;
+    // V2 Basic costs four credits per complete energy poll. Do not schedule
+    // a fast frontend timer even though the backend also caches for six hours.
+    const basicFloor = 1000 * 60 * 60 * 6;
+    if (!Number.isFinite(this.config.updateIntervalBasicData) ||
+        this.config.updateIntervalBasicData < basicFloor) {
+      console.warn("MMM-SolarEdge: invalid or too-fast basic polling; using six hours for V2 credits");
+      this.config.updateIntervalBasicData = basicFloor;
     }
-
-    //Modbus delivers the power flow on its own, so an API key is optional
-    //there - the long term views simply stay hidden without one.
-    if (!this.config.apiKey && this.config.dataSource === "modbus") {
-      if (this.config.showOverview || this.config.showDayEnergy) {
-        console.warn(
-          "MMM-SolarEdge: no apiKey set, hiding the overview and day energy " +
-            "views - those are only available through the monitoring API"
-        );
+    if (!Number.isFinite(this.config.updateInterval) || this.config.updateInterval < 1000) {
+      console.warn("MMM-SolarEdge: invalid or too-fast Modbus polling; using 5000 ms");
+      this.config.updateInterval = 5000;
+    }
+    // Modbus live readings need no OAuth. Suppress optional cloud views when
+    // the Site Access credentials are absent; API-only mode cannot run then.
+    if (!this.config.mockData && (!this.config.clientId || !this.config.clientSecret)) {
+      if (this.config.dataSource === "modbus") {
+        if (this.config.showOverview || this.config.showDayEnergy) {
+          console.warn("MMM-SolarEdge: no OAuth client credentials; hiding cloud energy views; Modbus live power remains available");
+        }
+        this.config.showOverview = false;
+        this.config.showDayEnergy = false;
+      } else {
+        console.warn("MMM-SolarEdge: API mode requires clientId and clientSecret");
       }
-      this.config.showOverview = false;
-      this.config.showDayEnergy = false;
     }
 
     if (this.config.userName || this.config.userPassword) {
@@ -220,9 +210,9 @@ Module.register("MMM-SolarEdge", {
 
   getDecimalAdjustedValue: function (value) {
     if (this.config.decimal === "comma") {
-      return value.toFixed(2).replace(".", "," );
+      return value == null ? "–" : value.toFixed(2).replace(".", "," );
     } else {
-      return value.toFixed(2);
+      return value == null ? "–" : value.toFixed(2);
     }
   },
 
@@ -261,6 +251,9 @@ Module.register("MMM-SolarEdge", {
     if (!this.configComplete() || !this.loaded) {
       return "templates/default.njk";
     }
+    if (this.config.dataSource === "api") {
+      return "templates/energy.njk";
+    }
     if (this.dataNotificationCurrentPower !== undefined) {
       if (
         this.dataNotificationCurrentPower.siteCurrentPowerFlow.STORAGE !==
@@ -282,9 +275,10 @@ Module.register("MMM-SolarEdge", {
     if (!this.config.siteId) {
       return false;
     }
-    return this.config.dataSource === "modbus"
-      ? Boolean(this.config.modbus.host)
-      : Boolean(this.config.apiKey);
+    if (this.config.dataSource === "api") {
+      return Boolean(this.config.clientId && this.config.clientSecret);
+    }
+    return Boolean(this.config.modbus.host);
   },
 
   getTemplateData: function () {
@@ -301,6 +295,13 @@ Module.register("MMM-SolarEdge", {
       };
     }
 
+    if (this.config.dataSource === "api") {
+      return {
+        config: this.config,
+        lifeTimeData: this.mapLifeTime(),
+        dayEnergyData: this.mapDayEnergy()
+      };
+    }
     if (this.dataNotificationCurrentPower !== undefined) {
       return {
         config: this.config,
@@ -394,15 +395,21 @@ Module.register("MMM-SolarEdge", {
     }
   },
 
+  meterKwh: function (details, type) {
+    const meter = details.meters.find((entry) => entry.type === type);
+    const value = meter && meter.values[0].value;
+    return value == null ? null : value / 1000;
+  },
+
   mapDayEnergy: function () {
     if (this.dataNotificationDayEnergy) {
       var energyDetails = this.dataNotificationDayEnergy.energyDetails;
       return {
-        production: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'Production').values[0].value / 1000),
-        consumption: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'Consumption').values[0].value / 1000),
-        feedIn: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'FeedIn').values[0].value / 1000),
-        purchased: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'Purchased').values[0].value / 1000),
-        selfConsumption: this.getDecimalAdjustedValue(energyDetails.meters.find(e => e.type === 'SelfConsumption').values[0].value / 1000),
+        production: this.getDecimalAdjustedValue(this.meterKwh(energyDetails, "Production")),
+        consumption: this.getDecimalAdjustedValue(this.meterKwh(energyDetails, "Consumption")),
+        feedIn: this.getDecimalAdjustedValue(this.meterKwh(energyDetails, "FeedIn")),
+        purchased: this.getDecimalAdjustedValue(this.meterKwh(energyDetails, "Purchased")),
+        selfConsumption: this.getDecimalAdjustedValue(this.meterKwh(energyDetails, "SelfConsumption")),
       };
     }
   },
