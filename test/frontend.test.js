@@ -6,13 +6,16 @@ const source = fs.readFileSync(require.resolve("../MMM-SolarEdge.js"), "utf8");
 function moduleWith(config) {
   let module;
   const notifications = [];
+  const timers = [];
+  const intervals = [];
   const context = { Module: { register: (_name, definition) => { module = definition; } },
     console: { log() {}, warn() {}, error() {} },
-    setTimeout: () => 1, setInterval: () => 1 };
+    setTimeout: (callback, delay) => { timers.push({ callback, delay }); return timers.length; },
+    setInterval: (callback, delay) => { intervals.push({ callback, delay }); return intervals.length; } };
   vm.runInNewContext(source, context);
   module.config = { ...module.defaults, siteId: "42", clientId: "test-id", clientSecret: "test-secret", ...config };
   module.sendSocketNotification = (name) => notifications.push(name);
-  return { module, notifications };
+  return { module, notifications, timers, intervals };
 }
 test("default API mode renders energy without live power polling", () => {
   const { module, notifications } = moduleWith({});
@@ -23,6 +26,17 @@ test("default API mode renders energy without live power polling", () => {
   assert.ok(!("powerAndStatus" in module.getTemplateData()));
   module.dataNotificationOverview = { overview: { lastDayData: { energy: 1000 }, lastMonthData: { energy: 2000 }, lastYearData: { energy: 3000 } } };
   assert.equal(module.getTemplateData().lifeTimeData.today, "1,00");
+});
+test("basic polling timer starts with the first request, not before startup jitter", () => {
+  const { module, notifications, timers, intervals } = moduleWith({});
+  module.start();
+  assert.equal(intervals.length, 0);
+  const firstBasic = timers.find(t => t.delay === module.startupJitter * 2);
+  assert.ok(firstBasic);
+  firstBasic.callback();
+  assert.equal(intervals.length, 1);
+  assert.equal(intervals[0].delay, module.config.updateIntervalBasicData + 5 * 60 * 1000);
+  assert.ok(notifications.some(n => n.includes("OVERVIEW_DATA_REQUESTED")));
 });
 test("polling intervals and missing OAuth settings are validated after Modbus fallback", () => {
   const noAuth = moduleWith({ dataSource: "modbus", modbus: { host: "localhost" }, clientId: undefined, clientSecret: undefined,

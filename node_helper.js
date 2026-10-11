@@ -93,7 +93,7 @@ module.exports = NodeHelper.create({
       ...payload.config,
       ...server,
       siteId: server.siteId,
-      modbus: { ...payload.config?.modbus, ...server.modbus, host: server.modbus.host },
+      modbus: { ...payload.config?.modbus, ...server.modbus, host: server.modbus?.host },
       // The browser payload is untrusted; only the on-server MagicMirror
       // config may select a reverse proxy that receives the bearer token.
       portalUrl: server.portalUrl || "https://monitoringapi.solaredge.com/v2"
@@ -142,8 +142,12 @@ module.exports = NodeHelper.create({
     const cached = this.apiCache[key];
     const ttl = endpoint === "details" ? Infinity : 1000 * 60 * 60 * 6;
     if (cached && Date.now() - cached.at < ttl) return Promise.resolve(cached.data);
+    const startedAt = Date.now();
     return Promise.resolve(this.provide(endpoint, config)).then((data) => {
-      this.apiCache[key] = { at: Date.now(), data };
+      // Start the TTL with the request, not its response. Otherwise a poll
+      // scheduled exactly six hours later hits the just-unexpired cache and
+      // the next real update only happens twelve hours after startup.
+      this.apiCache[key] = { at: startedAt, data };
       return data;
     });
   },

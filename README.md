@@ -46,7 +46,11 @@ MagicMirror configuration file:
 ## SolarEdge V2 Basic Monitoring
 
 Homeowner Site Access uses an OAuth client ID and client secret, not a Fleet API key.
-This module keeps OAuth credentials and the rotating refresh token in MagicMirror `config/config.js` as requested. **MagicMirror serves config.js to browsers; anyone with access to the mirror can read the client secret and refresh token.** Keep the mirror LAN-only and do not publish it or commit your real config. V2 Basic provides
+The module reads these credentials from MagicMirror `config/config.js`; MagicMirror
+serves module configuration to browsers, so anyone with access to the mirror may
+read the client secret. Keep the mirror LAN-only and do not publish or commit the
+real config. The rotating refresh token is stored separately in the private
+module-local `.oauth-tokens.json`, never written to `config.js`. V2 Basic provides
 site details, energy totals and today's overview, but **no live power flow**.
 Default `dataSource: "api"` displays energy totals only, never instantaneous
 power or a simulated flow. Configure Modbus/TCP for live power. If Modbus is
@@ -65,17 +69,19 @@ proxy, so it must be under your control and must forward V2 paths and headers.
 Browser-provided URL overrides are ignored. An existing V1-only reverse proxy
 must be upgraded to forward `/v2` before cloud data can work.
 
-Basic energy polls every six hours by default: each cycle costs four V2 calls
-(three production-energy ranges and one daily overview), plus one site-details
-call at startup. With a 2,000-credit/month free tier and a 30-day month, one
-site uses at most 481 calls (480 energy + 1 details) with continuous uptime.
-The backend caches each endpoint per site for at least six hours, and details
-for its lifetime, so multiple browser clients share the same results instead
-of multiplying calls. A restart clears the cache and adds another initial batch;
-other apps or sites sharing the allowance also consume credits. An hourly
-four-call schedule would cost 2,881 calls/month and exceed that tier. Do not
-set `updateIntervalBasicData` below six hours; the backend enforces a six-hour
-floor for API reads. Check your actual allowance and usage in the portal.
+Basic energy polls roughly every six hours by default (a six-hour minimum plus
+five minutes of timing margin so the backend cache has expired): each cycle
+costs four V2 calls (three production-energy ranges and one daily overview),
+plus one site-details call at startup. With a 2,000-credit/month free tier and
+a 30-day month, one site uses at most 481 calls (480 energy + 1 details) with
+continuous uptime. The backend caches each endpoint per site for at least six
+hours and details for its lifetime, so multiple browser clients share the same
+results instead of multiplying calls. A restart clears the cache and adds
+another initial batch; other apps or sites sharing the allowance also consume
+credits. An hourly four-call schedule would cost 2,881 calls/month and exceed
+that tier. Do not set `updateIntervalBasicData` below six hours; the backend
+enforces a six-hour floor for API reads. Check your actual allowance and usage
+in the portal.
 Only mock fixtures are used in automated tests; no paid API requests are made.
 
 ### `dataSource: "modbus"`

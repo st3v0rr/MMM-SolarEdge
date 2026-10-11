@@ -71,11 +71,17 @@ Module.register("MMM-SolarEdge", {
       //Details never change during a session, so it is fetched once.
       setTimeout(() => this.getDetailsData(), this.startupJitter);
       if (this.config.showOverview || this.config.showDayEnergy) {
-        setTimeout(() => this.getBasicData(), this.startupJitter * 2);
-        setInterval(
-          () => this.getBasicData(),
-          this.config.updateIntervalBasicData
-        );
+        setTimeout(() => {
+          this.getBasicData();
+          // Give the backend's six-hour cache five minutes to expire even
+          // if the previous request arrived later over the socket. Without
+          // this margin a slightly early tick can show stale data until the
+          // following cycle (roughly twelve hours after startup).
+          setInterval(
+            () => this.getBasicData(),
+            this.config.updateIntervalBasicData + 1000 * 60 * 5
+          );
+        }, this.startupJitter * 2);
       }
     }
 

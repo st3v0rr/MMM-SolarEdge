@@ -69,11 +69,48 @@ test("trusted server proxy is used but browser cannot override it", async () => 
   assert.throws(() => helper.buildUrl("details", { ...seen[0], portalUrl: "http://public.example" }), /Invalid/);
 });
 
+test("API-only server config without a Modbus block still serves requests", async () => {
+  const seen = [];
+  const instance = Object.assign({}, helper, {
+    inFlight: {}, skipped: {}, apiCache: {},
+    getServerModuleConfig: () => ({ siteId: "42", dataSource: "api" }),
+    provide: async (_endpoint, cfg) => { seen.push(cfg); return { ok: true }; },
+    sendSocketNotification: () => {}
+  });
+  await instance.socketNotificationReceived("MMM-SolarEdge-NOTIFICATION_SOLAREDGE_DETAILS_DATA_REQUESTED", {
+    config: { siteId: "99", modbus: { host: "attacker.example" } }
+  });
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].siteId, "42");
+  assert.equal(seen[0].modbus.host, undefined);
+});
+
 test("V2 Basic does not request live power", async () => {
   await assert.rejects(helper.readApi("currentPower", config), /Modbus/);
 });
 
 
+test("cache TTL starts when the request starts, not after a slow response", async () => {
+  const ttl = 1000 * 60 * 60 * 6;
+  let calls = 0;
+  const instance = Object.assign({}, helper, {
+    apiCache: {},
+    provide: async () => {
+      calls++;
+      await new Promise(resolve => setTimeout(resolve, 30));
+      return { calls };
+    }
+  });
+  const cfg = { siteId: "42" };
+  const requestStarted = Date.now();
+  await instance.provideCached("overview", cfg);
+  const responseFinished = Date.now();
+  assert.ok(instance.apiCache["overview@42"].at >= requestStarted);
+  assert.ok(instance.apiCache["overview@42"].at <= responseFinished - 15);
+  // Simulate the six-hour poll without waiting or calling the actual API.
+  instance.apiCache["overview@42"].at -= ttl;
+  assert.equal((await instance.provideCached("overview", cfg)).calls, 2);
+});
 test("six-hour backend cache shares Basic reads across clients", async () => {
   let calls = 0;
   const instance = Object.assign({}, helper, {
