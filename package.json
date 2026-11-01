@@ -17,6 +17,7 @@
 	],
 	"author": "Stefan Nachtrab",
 	"license": "MIT",
+	"scripts": { "test": "node --test test/*.test.js" },
 	"devDependencies": {
 		"eslint": "^10.0.2",
 		"eslint-config-prettier": "^10.1.8",
